@@ -37,7 +37,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder):
         sentences = SentencesFromElasticsearch(startY, endY)
         model = gensim.models.Word2Vec(min_count=1)
         model.build_vocab(sentences)
-        model.train(sentences)
+        model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
 
         print('...saving')
         model.init_sims(replace=True)
