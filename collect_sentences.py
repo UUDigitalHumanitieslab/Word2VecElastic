@@ -5,11 +5,12 @@ import re
 import nltk
 from nltk.corpus import words, wordnet, stopwords
 
-node = {'host': 'im-linux-timestextmining-acc',
+node = {'host': 'im-linux-elasticsearch01',
         'port': 9200}
 es = Elasticsearch([node])
 _englishWords = set(w.lower() for w in words.words())
 _englishStopWords = set(stopwords.words('english'))
+_dutchStopWords = set(stopwords.words('dutch'))
 _removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
 
 class SentencesFromElasticsearch(object):
@@ -37,7 +38,7 @@ def getMinYear():
             "min_date" : { "min" : { "field" : "date" } }
         }
     }
-    min_date = es.search(index='times', body=body, size=0)
+    min_date = es.search(index='dutchnewspapers-public', body=body, size=0)
     #return int(min_date['aggregations']['min_date']['value_as_string'][:4])
     return 1840 # returning fixed date for now
 
@@ -48,7 +49,7 @@ def getMaxYear():
             "max_date" : { "max" : { "field" : "date" } }
         }
     }
-    max_date = es.search(index='times', body=body, size=0)
+    max_date = es.search(index='dutchnewspapers-public', body=body, size=0)
     #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
     return 1920 # returning fixed date for now
 
@@ -58,15 +59,26 @@ def getDocumentsForYear(year):
     max_date = str(year)+"-12-31"
     body = {
         "query": {
-            "range" : {
-                "date" : {
-                    "gte" : min_date,
-                    "lte" : max_date
-                }
+            "bool": {
+                "filter": [
+                    {
+                        "range" : {
+                            "date" : {
+                                "gte" : min_date,
+                                "lte" : max_date
+                            }
+                        }
+                    },
+                    {
+                        "terms": {
+                            "circulation": ["Landelijk", "Regionaal/lokaal"]
+                        }
+                    } 
+                ]
             }
         }
     }
-    docs = es.search(index='times', body=body, size=1000, scroll="1m")
+    docs = es.search(index='dutchnewspapers-public', body=body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']
     scroll_id = docs['_scroll_id']
@@ -118,13 +130,9 @@ def _prepareSentence(sentence):
 
 
 def _isValidWord(word):
-    """Determine whether a word is valid. A valid word is a valid english
+    """Determine whether a word is valid. A valid word is a dutch
     non-stop word."""
-    if word in _englishStopWords:
+    if word in _dutchStopWords:
         return False
-    elif word in _englishWords:
-        return True
-    elif wordnet.synsets(word):
-        return True
     else:
-        return False
+        return True

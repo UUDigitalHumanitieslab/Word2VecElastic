@@ -35,7 +35,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder):
         print('Building model: ', modelName)
 
         sentences = SentencesFromElasticsearch(startY, endY)
-        model = gensim.models.Word2Vec(min_count=1)
+        model = gensim.models.Word2Vec(min_count=20)
         model.build_vocab(sentences)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
 
