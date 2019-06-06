@@ -83,7 +83,7 @@ def getDocumentsForYear(year):
     total_hits = docs['hits']['total']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
-        if 'scroll_id' in docs:
+        if '_scroll_id' in docs:
             scroll_id = docs['_scroll_id']
         docs = es.scroll(scroll_id=scroll_id, scroll="1m")
         content.extend([result['_source']['content'] for result in docs['hits']['hits']])
