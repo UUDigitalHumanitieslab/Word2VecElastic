@@ -14,6 +14,10 @@ Options:
 """
 import gensim
 
+import logging
+logger = logging.getLogger(__name__)
+logger.basicConfig(filename='generate_models.log', level='INFO', filemode='w+')
+
 from docopt import docopt
 from collect_sentences import SentencesFromElasticsearch, getNumberArticlesForTimeInterval
 from util import checkPath
@@ -32,9 +36,9 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder):
         endY = year + yearsInModel
         modelName = modelFolder + '/%d_%d.w2v' % (year, year + yearsInModel)
         vocabName = modelName.replace('.w2v', '.vocab.w2v')
-        print('Building model: ', modelName)
+        logger.info('Building model: ', modelName)
         total_count = getNumberArticlesForTimeInterval(startY, endY)
-        print('Total number of articles: ', total_count)
+        logger.info('Total number of articles: ', total_count)
         # sentences = SentencesFromElasticsearch(startY, endY)
         # tokens, words = count_tokens_words(sentences)
         # print('Tokens: ', tokens, ' Words: ', words)

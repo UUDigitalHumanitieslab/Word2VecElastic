@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 from elasticsearch import Elasticsearch
 
 import string
@@ -37,7 +40,7 @@ def getNumberArticlesForTimeInterval(startY, endY):
     search_body = getSearchBody(min_date, max_date)
     docs = es.search(index='dutchnewspapers-public', body=search_body, size=0)
     total_hits = docs['hits']['total']
-    print(docs)
+    logger.info(docs)
     return total_hits
 
 
