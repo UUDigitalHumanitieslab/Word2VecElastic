@@ -7,27 +7,6 @@ from nltk.corpus import words, wordnet, stopwords
 
 node = {'host': 'im-linux-elasticsearch01',
         'port': 9200}
-search_body =  {
-    "query": {
-        "bool": {
-            "filter": [
-                {
-                    "range" : {
-                        "date" : {
-                            "gte" : min_date,
-                            "lte" : max_date
-                        }
-                    }
-                },
-                {
-                    "terms": {
-                        "circulation": ["Landelijk", "Regionaal/lokaal"]
-                    }
-                } 
-            ]
-        }
-    }
-}
 
 es = Elasticsearch([node])
 _englishWords = set(w.lower() for w in words.words())
@@ -55,6 +34,7 @@ class SentencesFromElasticsearch(object):
 def getNumberArticlesForTimeInterval(startY, endY):
     min_date = str(startY)+"-01-01"
     max_date = str(endY)+"-12-31"
+    search_body = getSearchBody(min_date, max_date)
     docs = es.search(index='dutchnewspapers-public', body=search_body, size=0)
     total_hits = docs['hits']['total']
     return total_hits
@@ -82,10 +62,33 @@ def getMaxYear():
     #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
     return 1920 # returning fixed date for now
 
+
+def getSearchBody(min_date, max_date):
+    return { "query": {
+        "bool": {
+            "filter": [
+                {
+                    "range" : {
+                        "date" : {
+                            "gte" : min_date,
+                            "lte" : max_date
+                        }
+                    }
+                },
+                {
+                    "terms": {
+                        "circulation": ["Landelijk", "Regionaal/lokaal"]
+                    }
+                } 
+            ]
+        }
+    }}
+
 def getDocumentsForYear(year):
     '''Retrieves a list of documents for a year specified.'''
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
+    search_body = getSearchBody(min_date, max_date)
     docs = es.search(index='dutchnewspapers-public', body=search_body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']
