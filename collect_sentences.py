@@ -51,7 +51,7 @@ def getMinYear():
             "min_date" : { "min" : { "field" : "date" } }
         }
     }
-    min_date = es.search(index='dutchnewspapers-public', body=body, size=0)
+    min_date = es.search(index='dutchnewspapers-all', body=body, size=0)
     #return int(min_date['aggregations']['min_date']['value_as_string'][:4])
     return 1840 # returning fixed date for now
 
