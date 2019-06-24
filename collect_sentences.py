@@ -7,6 +7,28 @@ from nltk.corpus import words, wordnet, stopwords
 
 node = {'host': 'im-linux-elasticsearch01',
         'port': 9200}
+search_body =  {
+    "query": {
+        "bool": {
+            "filter": [
+                {
+                    "range" : {
+                        "date" : {
+                            "gte" : min_date,
+                            "lte" : max_date
+                        }
+                    }
+                },
+                {
+                    "terms": {
+                        "circulation": ["Landelijk", "Regionaal/lokaal"]
+                    }
+                } 
+            ]
+        }
+    }
+}
+
 es = Elasticsearch([node])
 _englishWords = set(w.lower() for w in words.words())
 _englishStopWords = set(stopwords.words('english'))
@@ -29,6 +51,13 @@ class SentencesFromElasticsearch(object):
                     if output:
                         yield output
 
+
+def getNumberArticlesForTimeInterval(startY, endY):
+    min_date = str(startY)+"-01-01"
+    max_date = str(endY)+"-12-31"
+    docs = es.search(index='dutchnewspapers-public', body=search_body, size=0)
+    total_hits = docs['hits']['total']
+    return total_hits
 
 
 def getMinYear():
@@ -57,28 +86,7 @@ def getDocumentsForYear(year):
     '''Retrieves a list of documents for a year specified.'''
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
-    body = {
-        "query": {
-            "bool": {
-                "filter": [
-                    {
-                        "range" : {
-                            "date" : {
-                                "gte" : min_date,
-                                "lte" : max_date
-                            }
-                        }
-                    },
-                    {
-                        "terms": {
-                            "circulation": ["Landelijk", "Regionaal/lokaal"]
-                        }
-                    } 
-                ]
-            }
-        }
-    }
-    docs = es.search(index='dutchnewspapers-public', body=body, size=1000, scroll="1m")
+    docs = es.search(index='dutchnewspapers-public', body=search_body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']
     scroll_id = docs['_scroll_id']
@@ -133,6 +141,10 @@ def _isValidWord(word):
     """Determine whether a word is valid. A valid word is a dutch
     non-stop word."""
     if word in _dutchStopWords:
+        return False
+    elif len(word)<3:
+        return False
+    elif _removePunctuation.search(word):
         return False
     else:
         return True

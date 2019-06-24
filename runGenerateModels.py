@@ -15,7 +15,7 @@ Options:
 import gensim
 
 from docopt import docopt
-from collect_sentences import SentencesFromElasticsearch
+from collect_sentences import SentencesFromElasticsearch, getNumberArticlesForTimeInterval
 from util import checkPath
 
 
@@ -33,15 +33,27 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder):
         modelName = modelFolder + '/%d_%d.w2v' % (year, year + yearsInModel)
         vocabName = modelName.replace('.w2v', '.vocab.w2v')
         print('Building model: ', modelName)
-
+        total_count = getNumberArticlesForTimeInterval(startY, endY)
+        print('Total number of articles: ', total_count)
         sentences = SentencesFromElasticsearch(startY, endY)
-        model = gensim.models.Word2Vec(min_count=20)
+        tokens, words = count_tokens_words(sentences)
+        print('Tokens: ', tokens, ' Words: ', words)
+        model = gensim.models.Word2Vec(min_count=int(total_count/10000))
         model.build_vocab(sentences)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
 
         print('...saving')
         model.init_sims(replace=True)
         model.wv.save_word2vec_format(modelName, fvocab=vocabName, binary=True)
+    
+
+def count_tokens_words(sentences):
+    token_count = 0
+    words = set()
+    for sentence in sentences:
+        token_count += len(sentence)
+        words.update(sentence)
+    return token_count, len(words)
 
 
 if __name__ == '__main__':
