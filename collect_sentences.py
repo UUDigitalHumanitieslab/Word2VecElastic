@@ -38,7 +38,7 @@ def getNumberArticlesForTimeInterval(startY, endY):
     min_date = str(startY)+"-01-01"
     max_date = str(endY)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index='dutchnewspapers-public', body=search_body, size=0)
+    docs = es.search(index='dutchnewspapers-all', body=search_body, size=0)
     total_hits = docs['hits']['total']
     logger.info(docs)
     return total_hits
@@ -62,7 +62,7 @@ def getMaxYear():
             "max_date" : { "max" : { "field" : "date" } }
         }
     }
-    max_date = es.search(index='dutchnewspapers-public', body=body, size=0)
+    max_date = es.search(index='dutchnewspapers-all', body=body, size=0)
     #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
     return 1920 # returning fixed date for now
 
@@ -93,7 +93,7 @@ def getDocumentsForYear(year):
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index='dutchnewspapers-public', body=search_body, size=1000, scroll="1m")
+    docs = es.search(index='dutchnewspapers-all', body=search_body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']
     scroll_id = docs['_scroll_id']
