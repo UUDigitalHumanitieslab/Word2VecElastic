@@ -38,7 +38,8 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder):
         sentences = SentencesFromElasticsearch(startY, endY)
         tokens, words = count_tokens_words(sentences)
         print('Tokens: ', tokens, ' Words: ', words)
-        model = gensim.models.Word2Vec(min_count=int(total_count/10000))
+        sentences = SentencesFromElasticsearch(startY, endY)
+        model = gensim.models.Word2Vec(min_count=100)
         model.build_vocab(sentences)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
 
