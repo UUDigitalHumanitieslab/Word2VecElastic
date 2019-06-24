@@ -15,8 +15,8 @@ Options:
 import gensim
 
 import logging
+logging.basicConfig(filename='models.log', level='INFO', filemode='w+')
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='generate_models.log', level='INFO', filemode='w+')
 
 from docopt import docopt
 from collect_sentences import SentencesFromElasticsearch, getNumberArticlesForTimeInterval
