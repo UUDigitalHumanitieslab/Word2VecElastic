@@ -43,7 +43,9 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder):
         tokens, words = count_tokens_words(sentences)
         logger.warning('Tokens: {}, Words: {}'.format(tokens, words))
         sentences = SentencesFromElasticsearch(startY, endY)
-        model = gensim.models.Word2Vec(min_count=100)
+        min_count = int(words / 200000)
+        logger.warning('min_count is: {}'.format(min_count))
+        model = gensim.models.Word2Vec(min_count=min_count)
         model.build_vocab(sentences)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
 
