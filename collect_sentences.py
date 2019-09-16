@@ -17,7 +17,7 @@ class SentencesFromElasticsearch(object):
         self.minYear = minYear
         self.maxYear = maxYear
     def __iter__(self):
-        for year in range(self.minYear, self.maxYear+1):
+        for year in range(self.minYear, self.maxYear):
             documents = getDocumentsForYear(year)
             for doc in documents:
                 sentences = _getSentencesInArticle(doc)
@@ -48,7 +48,7 @@ def getMaxYear():
             "max_date" : { "max" : { "field" : "date" } }
         }
     }
-    max_date = es.search(index='times', body=body, size=0)
+    max_date = es.search(index='guardianobserver', body=body, size=0)
     #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
     return 1920 # returning fixed date for now
 
