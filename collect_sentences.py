@@ -7,7 +7,7 @@ from nltk.corpus import words, wordnet, stopwords
 
 node = {'host': 'im-linux-elasticsearch01',
         'port': 9200}
-es = Elasticsearch([node])
+es = Elasticsearch([node], timeout=30, max_retries=10, retry_on_timeout=True)
 _englishWords = set(w.lower() for w in words.words())
 _englishStopWords = set(stopwords.words('english'))
 _removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
@@ -51,6 +51,22 @@ def getMaxYear():
     #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
     return 1920 # returning fixed date for now
 
+def getSearchBody(min_date, max_date):
+    return { "query": {
+        "bool": {
+            "filter": [
+                {
+                    "range" : {
+                        "date" : {
+                            "gte" : min_date,
+                            "lte" : max_date
+                        }
+                    }
+                }
+            ]
+        }
+    }}
+
 def getNumberArticlesForTimeInterval(startY, endY):
     min_date = str(startY)+"-01-01"
     max_date = str(endY)+"-12-31"
@@ -64,17 +80,8 @@ def getDocumentsForYear(year):
     '''Retrieves a list of documents for a year specified.'''
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
-    body = {
-        "query": {
-            "range" : {
-                "date" : {
-                    "gte" : min_date,
-                    "lte" : max_date
-                }
-            }
-        }
-    }
-    docs = es.search(index='times', body=body, size=1000, scroll="1m")
+    search_body = getSearchBody(min_date, max_date)
+    docs = es.search(index='times', body=search_body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']
     scroll_id = docs['_scroll_id']
