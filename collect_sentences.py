@@ -5,7 +5,7 @@ import re
 import nltk
 from nltk.corpus import words, wordnet, stopwords
 
-node = {'host': 'im-linux-timestextmining-acc',
+node = {'host': 'im-linux-elasticsearch01',
         'port': 9200}
 es = Elasticsearch([node])
 _englishWords = set(w.lower() for w in words.words())
@@ -29,7 +29,6 @@ class SentencesFromElasticsearch(object):
                         yield output
 
 
-
 def getMinYear():
     '''Retrieves the first year on the data set.'''
     body = {
@@ -51,6 +50,15 @@ def getMaxYear():
     max_date = es.search(index='guardianobserver', body=body, size=0)
     #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
     return 1920 # returning fixed date for now
+
+def getNumberArticlesForTimeInterval(startY, endY):
+    min_date = str(startY)+"-01-01"
+    max_date = str(endY)+"-12-31"
+    search_body = getSearchBody(min_date, max_date)
+    docs = es.search(index='dutchnewspapers-all', body=search_body, size=0)
+    total_hits = docs['hits']['total']
+    logger.info(docs)
+    return total_hits
 
 def getDocumentsForYear(year):
     '''Retrieves a list of documents for a year specified.'''
