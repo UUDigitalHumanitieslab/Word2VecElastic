@@ -28,29 +28,6 @@ class SentencesFromElasticsearch(object):
                     if output:
                         yield output
 
-
-def getMinYear():
-    '''Retrieves the first year on the data set.'''
-    body = {
-        "aggs" : {
-            "min_date" : { "min" : { "field" : "date" } }
-        }
-    }
-    min_date = es.search(index='times', body=body, size=0)
-    #return int(min_date['aggregations']['min_date']['value_as_string'][:4])
-    return 1840 # returning fixed date for now
-
-def getMaxYear():
-    '''Retrieves the last year on the data set.'''
-    body = {
-        "aggs" : {
-            "max_date" : { "max" : { "field" : "date" } }
-        }
-    }
-    max_date = es.search(index='guardianobserver', body=body, size=0)
-    #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
-    return 1920 # returning fixed date for now
-
 def getSearchBody(min_date, max_date):
     return { "query": {
         "bool": {
@@ -71,17 +48,17 @@ def getNumberArticlesForTimeInterval(startY, endY):
     min_date = str(startY)+"-01-01"
     max_date = str(endY)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index='dutchnewspapers-all', body=search_body, size=0)
+    docs = es.search(index='guardianobserver', body=search_body, size=0)
     total_hits = docs['hits']['total']
-    logger.info(docs)
     return total_hits
+
 
 def getDocumentsForYear(year):
     '''Retrieves a list of documents for a year specified.'''
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index='times', body=search_body, size=1000, scroll="1m")
+    docs = es.search(index='guardianobserver', body=search_body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']
     scroll_id = docs['_scroll_id']
