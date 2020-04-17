@@ -3,7 +3,7 @@
 one of the models spans a given number of years.
 
 Usage:
-  runGenerateModels.py --y0=<y0> --yN=<yN> --nYears=<years> --outDir=<dir> [--step=<years>]
+  runGenerateModels.py --y0=<y0> --yN=<yN> --nYears=<years> --outDir=<dir> [--step=<years>] --index=<index>
 
 Options:
   --y0 <y0>         First year in the generated models
@@ -11,7 +11,7 @@ Options:
   --nYears <years>  Number of years per model
   --outDir <dir>    Directory where models will be writen to
   --step <years>    Step between start year of generated models [default: 1]
-  --index           Which index to use for generating models
+  --index <index>   Which index to use for generating models
 """
 import gensim
 
