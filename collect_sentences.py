@@ -13,12 +13,13 @@ _englishStopWords = set(stopwords.words('english'))
 _removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
 
 class SentencesFromElasticsearch(object):
-    def __init__(self, minYear, maxYear):
+    def __init__(self, minYear, maxYear, index):
         self.minYear = minYear
         self.maxYear = maxYear
+        self.index = index
     def __iter__(self):
         for year in range(self.minYear, self.maxYear):
-            documents = getDocumentsForYear(year)
+            documents = getDocumentsForYear(year, index)
             for doc in documents:
                 sentences = _getSentencesInArticle(doc)
                 if not sentences:
@@ -44,21 +45,21 @@ def getSearchBody(min_date, max_date):
         }
     }}
 
-def getNumberArticlesForTimeInterval(startY, endY):
+def getNumberArticlesForTimeInterval(startY, endY, index):
     min_date = str(startY)+"-01-01"
     max_date = str(endY)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index='guardianobserver', body=search_body, size=0)
+    docs = es.search(index=index, body=search_body, size=0)
     total_hits = docs['hits']['total']
     return total_hits
 
 
-def getDocumentsForYear(year):
+def getDocumentsForYear(year, index):
     '''Retrieves a list of documents for a year specified.'''
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index='guardianobserver', body=search_body, size=1000, scroll="1m")
+    docs = es.search(index=index, body=search_body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']
     scroll_id = docs['_scroll_id']

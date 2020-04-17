@@ -11,6 +11,7 @@ Options:
   --nYears <years>  Number of years per model
   --outDir <dir>    Directory where models will be writen to
   --step <years>    Step between start year of generated models [default: 1]
+  --index           Which index to use for generating models
 """
 import gensim
 
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 CSV_FILE = 'count-guardian.csv'
 
-def generateModels(y0, yN, yearsInModel, stepYears, modelFolder):
+def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
     """Generate time shifting w2v models on the given time range (y0 - yN).
     Each model contains the specified number of years (yearsInModel). The start
     year of each new model is set to be stepYears after the previous model.
@@ -47,8 +48,8 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder):
         modelName = modelFolder + '/%d_%d.w2v' % (year, year + yearsInModel)
         vocabName = modelName.replace('.w2v', '.vocab.w2v')
         print('Building model: ', modelName)
-        total_count = getNumberArticlesForTimeInterval(startY, endY)
-        sentences = SentencesFromElasticsearch(startY, endY)
+        total_count = getNumberArticlesForTimeInterval(startY, endY, index)
+        sentences = SentencesFromElasticsearch(startY, endY, index)
         # count how many articles, tokens and words are in the model
         tokens, words = count_tokens_words(sentences)
         logger.warning('Tokens: {}, Words: {}'.format(tokens, words))
@@ -84,5 +85,6 @@ if __name__ == '__main__':
     outDir = args['--outDir']
     y0 = int(args['--y0'])
     yN = int(args['--yN'])
+    index = args['--index']
 
-    generateModels(y0, yN, yearsInModel, stepYears, outDir)
+    generateModels(y0, yN, yearsInModel, stepYears, outDir, index)
