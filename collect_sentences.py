@@ -19,7 +19,7 @@ class SentencesFromElasticsearch(object):
         self.index = index
     def __iter__(self):
         for year in range(self.minYear, self.maxYear):
-            documents = getDocumentsForYear(year, index)
+            documents = getDocumentsForYear(year, self.index)
             for doc in documents:
                 sentences = _getSentencesInArticle(doc)
                 if not sentences:

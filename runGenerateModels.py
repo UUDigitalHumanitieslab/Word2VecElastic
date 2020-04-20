@@ -25,8 +25,6 @@ import logging
 logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a')
 logger = logging.getLogger(__name__)
 
-CSV_FILE = 'count-guardian.csv'
-
 def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
     """Generate time shifting w2v models on the given time range (y0 - yN).
     Each model contains the specified number of years (yearsInModel). The start
@@ -34,10 +32,10 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
     Resulting models are saved on modelFolder.
     """
     checkPath(modelFolder)
-
+    csv_filename = 'count-{}.csv'.format(index)
     fieldnames = ['year', 'articles', 'tokens', 'words']
-    if not isfile(CSV_FILE):
-        with open(CSV_FILE, "a+") as csv_file:
+    if not isfile(csv_filename):
+        with open(csf_filename, "a+") as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             csv_writer.writeheader()
 
@@ -54,11 +52,11 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         tokens, words = count_tokens_words(sentences)
         logger.warning('Tokens: {}, Words: {}'.format(tokens, words))
         info_dict = {'year': year, 'articles': total_count, 'tokens': tokens, 'words': words}
-        with open(CSV_FILE, "a") as csv_file:
+        with open(csv_filename, "a") as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             csv_writer.writerow(info_dict)
         # build the actual model
-        sentences = SentencesFromElasticsearch(startY, endY)
+        sentences = SentencesFromElasticsearch(startY, endY, index)
         model = gensim.models.Word2Vec(min_count=1)
         model.build_vocab(sentences)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
