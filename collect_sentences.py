@@ -93,7 +93,7 @@ def _getSentencesInArticle(body):
     sentence represented by a string)."""
     sent_tokenizer = nltk.punkt.PunktSentenceTokenizer()
     if isinstance(body, str):
-        sentences = sent_tokenizer.tokenize(body.encode('utf-8'))
+        sentences = sent_tokenizer.tokenize(body.decode('utf-8'))
         return sentences
     else:
         print(body)
