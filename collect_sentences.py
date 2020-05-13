@@ -84,6 +84,7 @@ def getSentencesForYear(year):
         if doc_tok:
             sentences.extend(doc_tok)
     final_sentences = [_prepareSentence(sentence) for sentence in sentences]
+    print(year, len(final_sentences))
     return final_sentences
 
 
@@ -92,8 +93,7 @@ def _getSentencesInArticle(body):
     sentence represented by a string)."""
     sent_tokenizer = nltk.punkt.PunktSentenceTokenizer()
     if isinstance(body, str):
-        sentences = sent_tokenizer.tokenize(body)
-        print(sentences)
+        sentences = sent_tokenizer.tokenize(body.encode('utf-8'))
         return sentences
     else:
         print(body)
