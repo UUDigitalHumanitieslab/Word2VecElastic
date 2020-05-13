@@ -80,7 +80,7 @@ def getSentencesForYear(year):
     docs = getDocumentsForYear(year)
     sentences = []
     for doc in docs:
-        doc_tok = _getSentencesInArticle(doc)
+        doc_tok = _getSentencesInArticle(doc.decode('utf-8'))
         if doc_tok:
             sentences.extend(doc_tok)
     final_sentences = [_prepareSentence(sentence) for sentence in sentences]
