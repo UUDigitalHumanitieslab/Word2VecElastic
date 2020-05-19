@@ -7,7 +7,7 @@ from nltk.corpus import words, wordnet, stopwords
 
 node = {'host': 'im-linux-elasticsearch01',
         'port': 9200}
-es = Elasticsearch([node], timeout=30, max_retries=10, retry_on_timeout=True)
+es = Elasticsearch([node], timeout=60, max_retries=10, retry_on_timeout=True)
 _englishWords = set(w.lower() for w in words.words())
 _englishStopWords = set(stopwords.words('english'))
 _removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
