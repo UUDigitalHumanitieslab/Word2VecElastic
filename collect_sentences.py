@@ -61,7 +61,7 @@ def getDocumentsForYear(year, index):
     search_body = getSearchBody(min_date, max_date)
     docs = es.search(index=index, body=search_body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
-    total_hits = docs['hits']['total']
+    total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
         if 'scroll_id' in docs:
