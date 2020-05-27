@@ -35,7 +35,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
     csv_filename = 'count-{}.csv'.format(index)
     fieldnames = ['year', 'articles', 'tokens', 'words']
     if not isfile(csv_filename):
-        with open(csf_filename, "a+") as csv_file:
+        with open(csv_filename, "a+") as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             csv_writer.writeheader()
 
