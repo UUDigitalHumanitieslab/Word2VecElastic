@@ -5,7 +5,7 @@ import re
 import nltk
 from nltk.corpus import words, wordnet, stopwords
 
-node = {'host': 'im-linux-elasticsearch01',
+node = {'host': 'elastic.dhlab.hum.uu.nl',
         'port': 9200}
 es = Elasticsearch([node], timeout=60, max_retries=10, retry_on_timeout=True)
 _englishWords = set(w.lower() for w in words.words())
