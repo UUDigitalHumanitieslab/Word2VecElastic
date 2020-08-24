@@ -8,22 +8,22 @@ import re
 import nltk
 from nltk.corpus import words, wordnet, stopwords
 
-node = {'host': 'im-linux-elasticsearch01',
+node = {'host': 'elastic.dhlab.hum.uu.nl',
         'port': 9200}
-
-es = Elasticsearch([node])
+es = Elasticsearch([node], timeout=60, max_retries=10, retry_on_timeout=True)
 _englishWords = set(w.lower() for w in words.words())
 _englishStopWords = set(stopwords.words('english'))
 _dutchStopWords = set(stopwords.words('dutch'))
 _removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
 
 class SentencesFromElasticsearch(object):
-    def __init__(self, minYear, maxYear):
+    def __init__(self, minYear, maxYear, index):
         self.minYear = minYear
         self.maxYear = maxYear
+        self.index = index
     def __iter__(self):
-        for year in range(self.minYear, self.maxYear+1):
-            documents = getDocumentsForYear(year)
+        for year in range(self.minYear, self.maxYear):
+            documents = getDocumentsForYear(year, self.index)
             for doc in documents:
                 sentences = _getSentencesInArticle(doc)
                 if not sentences:
@@ -93,9 +93,9 @@ def getDocumentsForYear(year):
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index='dutchnewspapers-all', body=search_body, size=1000, scroll="1m")
+    docs = es.search(index=index, body=search_body, size=1000, scroll="1m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
-    total_hits = docs['hits']['total']
+    total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
         if '_scroll_id' in docs:
@@ -114,10 +114,11 @@ def getSentencesForYear(year):
     docs = getDocumentsForYear(year)
     sentences = []
     for doc in docs:
-        doc_tok = _getSentencesInArticle(doc)
+        doc_tok = _getSentencesInArticle(doc.decode('utf-8'))
         if doc_tok:
             sentences.extend(doc_tok)
     final_sentences = [_prepareSentence(sentence) for sentence in sentences]
+    print(year, len(final_sentences))
     return final_sentences
 
 
