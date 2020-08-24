@@ -38,8 +38,8 @@ def getNumberArticlesForTimeInterval(startY, endY, index):
     min_date = str(startY)+"-01-01"
     max_date = str(endY)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index=index, body=search_body, size=0)
-    total_hits = docs['hits']['total']
+    docs = es.search(index=index, body=search_body, track_total_hits=True, size=0)
+    total_hits = docs['hits']['total']['value']
     logger.info(docs)
     return total_hits
 
