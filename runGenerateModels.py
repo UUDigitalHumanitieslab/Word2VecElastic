@@ -65,7 +65,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         model = gensim.models.Word2Vec(min_count=min_count)
         model.build_vocab(sentences)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
-        print('Saving to ', modelName)
+        logger.warning('Saving to ', modelName)
         model.init_sims(replace=True)
         model.wv.save_word2vec_format(modelName, fvocab=vocabName, binary=True)
     

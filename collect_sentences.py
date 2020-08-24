@@ -23,6 +23,7 @@ class SentencesFromElasticsearch(object):
         self.index = index
     def __iter__(self):
         for year in range(self.minYear, self.maxYear):
+            print(year)
             documents = getDocumentsForYear(year, self.index)
             for doc in documents:
                 sentences = _getSentencesInArticle(doc)
@@ -93,14 +94,14 @@ def getDocumentsForYear(year, index):
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index=index, body=search_body, size=1000, scroll="1m")
+    docs = es.search(index=index, body=search_body, size=1000, scroll="10m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
         if '_scroll_id' in docs:
             scroll_id = docs['_scroll_id']
-        docs = es.scroll(scroll_id=scroll_id, scroll="1m")
+        docs = es.scroll(scroll_id=scroll_id, scroll="10m")
         content.extend([result['_source']['content'] for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
     return content
