@@ -34,35 +34,35 @@ class SentencesFromElasticsearch(object):
                         yield output
 
 
-def getNumberArticlesForTimeInterval(startY, endY):
+def getNumberArticlesForTimeInterval(startY, endY, index):
     min_date = str(startY)+"-01-01"
     max_date = str(endY)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index='dutchnewspapers-all', body=search_body, size=0)
+    docs = es.search(index=index, body=search_body, size=0)
     total_hits = docs['hits']['total']
     logger.info(docs)
     return total_hits
 
 
-def getMinYear():
+def getMinYear(index):
     '''Retrieves the first year on the data set.'''
     body = {
         "aggs" : {
             "min_date" : { "min" : { "field" : "date" } }
         }
     }
-    min_date = es.search(index='dutchnewspapers-all', body=body, size=0)
+    min_date = es.search(index=index, body=body, size=0)
     #return int(min_date['aggregations']['min_date']['value_as_string'][:4])
     return 1840 # returning fixed date for now
 
-def getMaxYear():
+def getMaxYear(index):
     '''Retrieves the last year on the data set.'''
     body = {
         "aggs" : {
             "max_date" : { "max" : { "field" : "date" } }
         }
     }
-    max_date = es.search(index='dutchnewspapers-all', body=body, size=0)
+    max_date = es.search(index=index, body=body, size=0)
     #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
     return 1920 # returning fixed date for now
 
@@ -88,7 +88,7 @@ def getSearchBody(min_date, max_date):
         }
     }}
 
-def getDocumentsForYear(year):
+def getDocumentsForYear(year, index):
     '''Retrieves a list of documents for a year specified.'''
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
@@ -106,12 +106,12 @@ def getDocumentsForYear(year):
     return content
 
 
-def getSentencesForYear(year):
+def getSentencesForYear(year, index):
     '''Return list of lists of strings.
     Return list of sentences in given year.
     Each sentence is a list of words.
     Each word is a string.'''
-    docs = getDocumentsForYear(year)
+    docs = getDocumentsForYear(year, index)
     sentences = []
     for doc in docs:
         doc_tok = _getSentencesInArticle(doc.decode('utf-8'))
