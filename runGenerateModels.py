@@ -47,7 +47,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         startY = year
         endY = year + yearsInModel
         logger.warning('Calculating years: {}-{}'.format(startY, endY))
-        total_count = getNumberArticlesForTimeInterval(startY, endY)
+        total_count = getNumberArticlesForTimeInterval(startY, endY, index)
         logger.warning('Total number of articles: '+str(total_count))
         sentences = SentencesFromElasticsearch(startY, endY, index)
         tokens, words = count_tokens_words(sentences)
