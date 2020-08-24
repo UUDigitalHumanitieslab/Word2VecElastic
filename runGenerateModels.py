@@ -39,7 +39,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
     csv_filename = 'count-{}.csv'.format(index)
     fieldnames = ['year', 'articles', 'tokens', 'words', 'min_count']
     if not isfile(csv_filename):
-        with open(csv_filename, "a+") as csv_file:
+        with open(csv_filename, "a") as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             csv_writer.writeheader()
 
@@ -49,18 +49,18 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         logger.warning('Calculating years: {}-{}'.format(startY, endY))
         total_count = getNumberArticlesForTimeInterval(startY, endY)
         logger.warning('Total number of articles: '+str(total_count))
-        sentences = SentencesFromElasticsearch(startY, endY)
+        sentences = SentencesFromElasticsearch(startY, endY, index)
         tokens, words = count_tokens_words(sentences)
         logger.warning('Tokens: {}, Words: {}'.format(tokens, words))
         min_count = int(words / 200000)
-        with open(csv_filename, "a+") as csv_file:
+        with open(csv_filename, "a") as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             csv_writer.writerow({'year': year, 
             'articles': total_count, 'tokens': tokens, 'words': words,
             'min_count': min_count})
         modelName = modelFolder + '/%d_%d.w2v' % (year, year + yearsInModel)
         vocabName = modelName.replace('.w2v', '.vocab.w2v')
-        sentences = SentencesFromElasticsearch(startY, endY)
+        sentences = SentencesFromElasticsearch(startY, endY, index)
         logger.warning('Building model: '+modelName)
         model = gensim.models.Word2Vec(min_count=min_count)
         model.build_vocab(sentences)
