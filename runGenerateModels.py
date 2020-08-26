@@ -16,7 +16,7 @@ Options:
 import gensim
 
 import logging
-logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a')
+logging.basicConfig(filename='models.log', level=logging.INFO, filemode='a', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
 from docopt import docopt

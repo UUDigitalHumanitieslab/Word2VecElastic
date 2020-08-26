@@ -1,5 +1,6 @@
 import logging
 logger = logging.getLogger(__name__)
+import time
 
 from elasticsearch import Elasticsearch
 
@@ -23,8 +24,11 @@ class SentencesFromElasticsearch(object):
         self.index = index
     def __iter__(self):
         for year in range(self.minYear, self.maxYear):
+            tic = time.perf_counter()
             print(year)
             documents = getDocumentsForYear(year, self.index)
+            toc = time.perf_counter()
+            print('Fetching documents took {} seconds'.format(toc - tic))
             for doc in documents:
                 sentences = _getSentencesInArticle(doc)
                 if not sentences:
