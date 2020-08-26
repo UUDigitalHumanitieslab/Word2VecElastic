@@ -22,7 +22,8 @@ import csv
 from os.path import isfile
 
 import logging
-logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a', datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a', datefmt='%Y-%m-%d %H:%M:%S', 
+    format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger(__name__)
 
 def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
