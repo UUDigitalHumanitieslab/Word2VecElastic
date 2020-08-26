@@ -15,10 +15,6 @@ Options:
 """
 import gensim
 
-import logging
-logging.basicConfig(filename='models.log', level=logging.INFO, filemode='a', datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger(__name__)
-
 from docopt import docopt
 from collect_sentences import SentencesFromElasticsearch, getNumberArticlesForTimeInterval
 from util import checkPath
@@ -26,7 +22,7 @@ import csv
 from os.path import isfile
 
 import logging
-logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a')
+logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
 def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
