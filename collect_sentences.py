@@ -11,7 +11,7 @@ from nltk.corpus import words, wordnet, stopwords
 
 node = {'host': 'elastic.dhlab.hum.uu.nl',
         'port': 9200}
-es = Elasticsearch([node], timeout=60, max_retries=10, retry_on_timeout=True)
+es = Elasticsearch([node], timeout=180)
 _englishWords = set(w.lower() for w in words.words())
 _englishStopWords = set(stopwords.words('english'))
 _dutchStopWords = set(stopwords.words('dutch'))
@@ -97,17 +97,38 @@ def getDocumentsForYear(year, index):
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
-    docs = es.search(index=index, body=search_body, size=1000, scroll="10m")
+    for retry in range(10):
+        try:
+           docs = es.search(index=index, body=search_body, size=1000, scroll="10m")
+        except Exception as e:
+            logger.warning(e)
+            time.sleep(10)
+            docs = es.search(index=index, body=search_body, size=1000, scroll="10m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
         if '_scroll_id' in docs:
             scroll_id = docs['_scroll_id']
-        docs = es.scroll(scroll_id=scroll_id, scroll="10m")
+        try:
+            docs = es.scroll(scroll_id=scroll_id, scroll="10m")
+        except Exception as e:
+            logger.warning(e)
+            time.sleep(10)
+            continue
         content.extend([result['_source']['content'] for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
     return content
+
+
+def retry_search(index, body):
+    for retry in range(10):
+        try:
+            
+    except Exception as e:
+        logger.warning(e)
+        time.sleep(10)
+        docs = es.search(index=index, body=search_body, size=1000, scroll="10m")
 
 
 def getSentencesForYear(year, index):
