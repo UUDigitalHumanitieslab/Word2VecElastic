@@ -103,7 +103,6 @@ def getDocumentsForYear(year, index):
         except Exception as e:
             logger.warning(e)
             time.sleep(10)
-            docs = es.search(index=index, body=search_body, size=1000, scroll="10m")
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
@@ -119,16 +118,6 @@ def getDocumentsForYear(year, index):
         content.extend([result['_source']['content'] for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
     return content
-
-
-def retry_search(index, body):
-    for retry in range(10):
-        try:
-            
-    except Exception as e:
-        logger.warning(e)
-        time.sleep(10)
-        docs = es.search(index=index, body=search_body, size=1000, scroll="10m")
 
 
 def getSentencesForYear(year, index):
