@@ -1,6 +1,8 @@
 import logging
 logger = logging.getLogger(__name__)
 import time
+import pickle
+import os
 
 from elasticsearch import Elasticsearch
 
@@ -33,10 +35,26 @@ class SentencesFromElasticsearch(object):
                 sentences = _getSentencesInArticle(doc)
                 if not sentences:
                     continue
-                for sentence in sentences:
-                    output = _prepareSentence(sentence)
-                    if output:
-                        yield output
+                with open('sentences.pkl', 'a+') as f:
+                    for sentence in sentences:
+                        output = _prepareSentence(sentence)
+                        if output:
+                            pickle.dump(f)
+                            yield output
+
+
+class SentencesFromPickle(object):
+    def __iter__(self):
+        if not os.isfile('sentences.pkl'):
+            raise FileNotFoundError
+        with open('sentences.pkl', 'rb') as f:
+            while True:
+                try:
+                    sentence = pickle.load(f)
+                    yield sentence
+                except EOFError:
+                    os.remove('sentences.pkl')
+                    break
 
 
 def getNumberArticlesForTimeInterval(startY, endY, index):

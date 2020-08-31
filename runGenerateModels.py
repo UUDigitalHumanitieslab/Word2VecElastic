@@ -16,7 +16,8 @@ Options:
 import gensim
 
 from docopt import docopt
-from collect_sentences import SentencesFromElasticsearch, getNumberArticlesForTimeInterval
+from collect_sentences import SentencesFromElasticsearch, \
+    SentencesFromPickle, getNumberArticlesForTimeInterval
 from util import checkPath
 import csv
 from os.path import isfile
@@ -57,7 +58,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
             'min_count': min_count})
         modelName = modelFolder + '/%d_%d.w2v' % (year, year + yearsInModel)
         vocabName = modelName.replace('.w2v', '.vocab.w2v')
-        sentences = SentencesFromElasticsearch(startY, endY, index)
+        sentences = SentencesFromPickle()
         logger.warning('Building model: '+modelName)
         model = gensim.models.Word2Vec(min_count=min_count)
         model.build_vocab(sentences)
