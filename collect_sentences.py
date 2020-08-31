@@ -35,7 +35,7 @@ class SentencesFromElasticsearch(object):
                 sentences = _getSentencesInArticle(doc)
                 if not sentences:
                     continue
-                with open('sentences.pkl', 'a+') as f:
+                with open('sentences.pkl', 'ab') as f:
                     for sentence in sentences:
                         output = _prepareSentence(sentence)
                         if output:
