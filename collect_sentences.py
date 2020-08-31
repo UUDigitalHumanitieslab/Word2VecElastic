@@ -117,21 +117,24 @@ def getDocumentsForYear(year, index):
     search_body = getSearchBody(min_date, max_date)
     for retry in range(10):
         try:
-           docs = es.search(index=index, body=search_body, size=1000, scroll="10m")
+           docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
         except Exception as e:
             logger.warning(e)
             time.sleep(10)
+    if not docs:
+        return None
     content = [result['_source']['content'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
-        if '_scroll_id' in docs:
-            scroll_id = docs['_scroll_id']
+        scroll_id = docs['_scroll_id']
         try:
-            docs = es.scroll(scroll_id=scroll_id, scroll="10m")
+            docs = es.scroll(scroll_id=scroll_id, scroll="60m")
         except Exception as e:
+            es.clear_scroll(scroll_id=scroll_id)
             logger.warning(e)
             time.sleep(10)
+            docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
             continue
         content.extend([result['_source']['content'] for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
