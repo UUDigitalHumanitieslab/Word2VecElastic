@@ -39,7 +39,7 @@ class SentencesFromElasticsearch(object):
                     for sentence in sentences:
                         output = _prepareSentence(sentence)
                         if output:
-                            pickle.dump(f)
+                            pickle.dump(output, f)
                             yield output
 
 
