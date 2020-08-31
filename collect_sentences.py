@@ -135,6 +135,7 @@ def getDocumentsForYear(year, index):
             logger.warning(e)
             time.sleep(10)
             docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
+            content = [result['_source']['content'] for result in docs['hits']['hits']]
             continue
         content.extend([result['_source']['content'] for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
