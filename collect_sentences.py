@@ -45,7 +45,7 @@ class SentencesFromElasticsearch(object):
 
 class SentencesFromPickle(object):
     def __iter__(self):
-        if not os.isfile('sentences.pkl'):
+        if not os.path.isfile('sentences.pkl'):
             raise FileNotFoundError
         with open('sentences.pkl', 'rb') as f:
             while True:
