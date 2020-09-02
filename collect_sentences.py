@@ -44,7 +44,7 @@ class SentencesFromElasticsearch(object):
                         output = _prepareSentence(sentence)
                         if output:
                             pickle.dump(output, f)
-                            return output
+                            yield output
 
 
 class SentencesFromPickle(object):
@@ -58,7 +58,7 @@ class SentencesFromPickle(object):
                 self.counter += 1
                 try:
                     sentence = pickle.load(f)
-                    return sentence
+                    yield sentence
                 except EOFError:
                     os.remove('sentences.pkl')
                     print(self.counter)
@@ -139,7 +139,6 @@ def getDocumentsForYear(year, index):
         try:
             docs = es.scroll(scroll_id=scroll_id, scroll="60m")
         except Exception as e:
-            es.clear_scroll(scroll_id=scroll_id)
             logger.warning(e)
             time.sleep(10)
             docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
