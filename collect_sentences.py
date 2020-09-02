@@ -24,13 +24,17 @@ class SentencesFromElasticsearch(object):
         self.minYear = minYear
         self.maxYear = maxYear
         self.index = index
+    
     def __iter__(self):
+        return self
+
+    def __next__(self):
         for year in range(self.minYear, self.maxYear):
             tic = time.perf_counter()
-            print(year)
             documents = getDocumentsForYear(year, self.index)
             toc = time.perf_counter()
-            print('Fetching documents took {} seconds'.format(toc - tic))
+            print('Fetching documents for year {} took {} seconds'.format(
+                year, toc - tic))
             for doc in documents:
                 sentences = _getSentencesInArticle(doc)
                 if not sentences:
@@ -40,21 +44,25 @@ class SentencesFromElasticsearch(object):
                         output = _prepareSentence(sentence)
                         if output:
                             pickle.dump(output, f)
-                            yield output
+                            return output
 
 
 class SentencesFromPickle(object):
     def __iter__(self):
-        if not os.path.isfile('sentences.pkl'):
-            raise FileNotFoundError
+        self.counter = 0
+        return self
+
+    def __next__(self):
         with open('sentences.pkl', 'rb') as f:
             while True:
+                self.counter += 1
                 try:
                     sentence = pickle.load(f)
-                    yield sentence
+                    return sentence
                 except EOFError:
                     os.remove('sentences.pkl')
-                    break
+                    print(self.counter)
+                    raise StopIteration
 
 
 def getNumberArticlesForTimeInterval(startY, endY, index):
