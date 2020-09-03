@@ -16,7 +16,7 @@ Options:
 import gensim
 
 from docopt import docopt
-from collect_sentences import SentencesFromElasticsearch, \
+from collect_sentences import sentences_from_elasticsearch, \
     SentencesFromPickle, getNumberArticlesForTimeInterval
 from util import checkPath
 import csv
@@ -47,7 +47,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         logger.warning('Calculating years: {}-{}'.format(startY, endY))
         total_count = getNumberArticlesForTimeInterval(startY, endY, index)
         logger.warning('Total number of articles: '+str(total_count))
-        sentences = SentencesFromElasticsearch(startY, endY, index)
+        sentences = sentences_from_elasticsearch(startY, endY, index)
         tokens, words = count_tokens_words(sentences)
         logger.warning('Tokens: {}, Words: {}'.format(tokens, words))
         min_count = int(words / 200000)

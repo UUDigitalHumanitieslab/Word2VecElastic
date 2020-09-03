@@ -19,32 +19,28 @@ _englishStopWords = set(stopwords.words('english'))
 _dutchStopWords = set(stopwords.words('dutch'))
 _removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
 
-class SentencesFromElasticsearch(object):
-    def __init__(self, minYear, maxYear, index):
-        self.minYear = minYear
-        self.maxYear = maxYear
-        self.index = index
-    
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        for year in range(self.minYear, self.maxYear):
-            tic = time.perf_counter()
-            documents = getDocumentsForYear(year, self.index)
-            toc = time.perf_counter()
-            print('Fetching documents for year {} took {} seconds'.format(
-                year, toc - tic))
-            for doc in documents:
-                sentences = _getSentencesInArticle(doc)
-                if not sentences:
-                    continue
-                with open('sentences.pkl', 'ab') as f:
-                    for sentence in sentences:
-                        output = _prepareSentence(sentence)
-                        if output:
-                            pickle.dump(output, f)
-                            yield output
+def sentences_from_elasticsearch(minYear, maxYear, index):
+    for year in range(minYear, maxYear):
+        counter = 0
+        tic = time.perf_counter()
+        documents = getDocumentsForYear(year, index)
+        toc = time.perf_counter()
+        print('Fetching documents for year {} took {} seconds. {} iterations since last print.'.format(
+            year, toc - tic, counter))
+        if not documents:
+            continue
+        
+        for doc in documents:
+            sentences = _getSentencesInArticle(doc)
+            if not sentences:
+                continue
+            with open('sentences.pkl', 'ab') as f:
+                for sentence in sentences:
+                    counter += 1
+                    output = _prepareSentence(sentence)
+                    if output:
+                        pickle.dump(output, f)
+                        yield output
 
 
 class SentencesFromPickle(object):
