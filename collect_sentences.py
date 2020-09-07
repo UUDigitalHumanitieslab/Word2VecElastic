@@ -48,7 +48,6 @@ class SentencesFromPickle(object):
     def __next__(self):
         with open('sentences.pkl', 'rb') as f:
             while True:
-                self.counter += 1
                 try:
                     sentence = pickle.load(f)
                     return sentence
