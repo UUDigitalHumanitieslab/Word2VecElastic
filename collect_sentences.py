@@ -21,12 +21,11 @@ _removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
 
 def sentences_from_elasticsearch(minYear, maxYear, index):
     for year in range(minYear, maxYear):
-        counter = 0
         tic = time.perf_counter()
         documents = getDocumentsForYear(year, index)
         toc = time.perf_counter()
-        print('Fetching documents for year {} took {} seconds. {} iterations since last print.'.format(
-            year, toc - tic, counter))
+        print('Fetching documents for year {} took {} seconds.'.format(
+            year, toc - tic))
         if not documents:
             continue
         
@@ -36,7 +35,6 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
                 continue
             with open('sentences.pkl', 'ab') as f:
                 for sentence in sentences:
-                    counter += 1
                     output = _prepareSentence(sentence)
                     if output:
                         pickle.dump(output, f)
@@ -45,7 +43,6 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
 
 class SentencesFromPickle(object):
     def __iter__(self):
-        self.counter = 0
         return self
 
     def __next__(self):
@@ -54,10 +51,8 @@ class SentencesFromPickle(object):
                 self.counter += 1
                 try:
                     sentence = pickle.load(f)
-                    yield sentence
+                    return sentence
                 except EOFError:
-                    os.remove('sentences.pkl')
-                    print(self.counter)
                     raise StopIteration
 
 

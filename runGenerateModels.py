@@ -21,6 +21,7 @@ from collect_sentences import sentences_from_elasticsearch, \
 from util import checkPath
 import csv
 from os.path import isfile
+import os
 
 import logging
 logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a', datefmt='%Y-%m-%d %H:%M:%S', 
@@ -47,6 +48,8 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         logger.warning('Calculating years: {}-{}'.format(startY, endY))
         total_count = getNumberArticlesForTimeInterval(startY, endY, index)
         logger.warning('Total number of articles: '+str(total_count))
+        if isfile('sentences.pkl'):
+            os.remove('sentences.pkl')
         sentences = sentences_from_elasticsearch(startY, endY, index)
         tokens, words = count_tokens_words(sentences)
         logger.warning('Tokens: {}, Words: {}'.format(tokens, words))
@@ -69,16 +72,6 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
     
 
 def count_tokens_words(sentences):
-    token_count = 0
-    words = set()
-    for sentence in sentences:
-        token_count += len(sentence)
-        words.update(sentence)
-    return token_count, len(words)
-
-
-def count_tokens_words(sentences):
-    """ count the number of tokens and words in the given time interval """
     token_count = 0
     words = set()
     for sentence in sentences:
