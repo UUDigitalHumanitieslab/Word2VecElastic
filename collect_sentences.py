@@ -41,18 +41,13 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
                         yield output
 
 
-class SentencesFromPickle(object):
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        with open('sentences.pkl', 'rb') as f:
+def sentences_from_pickle():
+    with open('sentences.pkl', 'rb') as file:
+        try:
             while True:
-                try:
-                    sentence = pickle.load(f)
-                    return sentence
-                except EOFError:
-                    raise StopIteration
+                yield pickle.load(file)
+        except EOFError:
+            raise StopIteration
 
 
 def getNumberArticlesForTimeInterval(startY, endY, index):
