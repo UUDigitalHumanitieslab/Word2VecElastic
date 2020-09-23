@@ -17,7 +17,7 @@ import gensim
 
 from docopt import docopt
 from collect_sentences import sentences_from_elasticsearch, \
-    sentences_from_pickle, getNumberArticlesForTimeInterval
+    SentencesFromPickle, getNumberArticlesForTimeInterval
 from util import checkPath
 import csv
 from os.path import isfile
@@ -61,7 +61,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
             'min_count': min_count})
         modelName = modelFolder + '/%d_%d.w2v' % (year, year + yearsInModel)
         vocabName = modelName.replace('.w2v', '.vocab.w2v')
-        sentences = sentences_from_pickle()
+        sentences = SentencesFromPickle()
         logger.warning('Building model: '+modelName)
         model = gensim.models.Word2Vec(min_count=min_count)
         model.build_vocab(sentences)

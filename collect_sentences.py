@@ -41,13 +41,29 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
                         yield output
 
 
-def sentences_from_pickle():
-    with open('sentences.pkl', 'rb') as file:
-        try:
-            while True:
-                yield pickle.load(file)
-        except EOFError:
+class SentencesFromPickle():
+    def __init__(self):
+        self.generator = self.generator_function()
+
+    def __iter__(self):
+        # reset the generator
+        self.generator = self.generator_function()
+        return self
+
+    def __next__(self):
+        result = next(self.generator)
+        if result is None:
             raise StopIteration
+        else:
+            return result
+    
+    def generator_function(self):
+        with open('sentences.pkl', 'rb') as file:
+            while True:
+                try:
+                    yield pickle.load(file)
+                except EOFError:
+                    break
 
 
 def getNumberArticlesForTimeInterval(startY, endY, index):
