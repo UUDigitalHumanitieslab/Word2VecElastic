@@ -59,14 +59,14 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
             csv_writer.writerow({'year': year, 
             'articles': total_count, 'tokens': tokens, 'words': words,
             'min_count': min_count})
-        modelName = modelFolder + '/%d_%d.w2v' % (year, year + yearsInModel)
+        modelName = '{}/{}_{}.w2v'.format(modelFolder, year, year + yearsInModel)
         vocabName = modelName.replace('.w2v', '.vocab.w2v')
         sentences = SentencesFromPickle()
         logger.warning('Building model: '+modelName)
         model = gensim.models.Word2Vec(min_count=min_count)
         model.build_vocab(sentences)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
-        logger.warning('Saving to ', modelName)
+        logger.warning('Saving to {}'.format(modelName))
         model.init_sims(replace=True)
         model.wv.save_word2vec_format(modelName, fvocab=vocabName, binary=True)
     
