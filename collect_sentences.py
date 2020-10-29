@@ -190,13 +190,13 @@ def _prepareSentence(sentence):
 
 
 def _isValidWord(word):
-    """Determine whether a word is valid. A valid word is a dutch
+    """Determine whether a word is valid. A valid word is a valid english
     non-stop word."""
-    if word in _dutchStopWords:
+    if word in _englishStopWords:
         return False
-    elif len(word)<3:
-        return False
-    elif _removePunctuation.search(word):
-        return False
-    else:
+    elif word in _englishWords:
         return True
+    elif wordnet.synsets(word):
+        return True
+    else:
+        return False
