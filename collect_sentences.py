@@ -99,25 +99,17 @@ def getMaxYear(index):
 
 
 def getSearchBody(min_date, max_date):
-    return { "query": {
-        "bool": {
-            "filter": [
-                {
-                    "range" : {
-                        "date" : {
-                            "gte" : min_date,
-                            "lte" : max_date
-                        }
-                    }
-                },
-                {
-                    "terms": {
-                        "circulation": ["Landelijk", "Regionaal/lokaal"]
-                    }
-                } 
-            ]
+    return {
+        "query": {
+            "range" : {
+                "date" : {
+                    "gte" : min_date,
+                    "lte" : max_date
+                }
+            }
         }
-    }}
+    }
+    
 
 def getDocumentsForYear(year, index):
     '''Retrieves a list of documents for a year specified.'''
