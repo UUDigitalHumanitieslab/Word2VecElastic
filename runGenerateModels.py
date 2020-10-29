@@ -53,12 +53,12 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         sentences = sentences_from_elasticsearch(startY, endY, index)
         tokens, words = count_tokens_words(sentences)
         logger.warning('Tokens: {}, Words: {}'.format(tokens, words))
-        min_count = int(words / 200000)
+        min_count = 1
         with open(csv_filename, "a") as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             csv_writer.writerow({'year': year, 
-            'articles': total_count, 'tokens': tokens, 'words': words,
-            'min_count': min_count})
+            'articles': total_count, 'tokens': tokens, 'words': words
+            })
         modelName = '{}/{}_{}.w2v'.format(modelFolder, year, year + yearsInModel)
         vocabName = modelName.replace('.w2v', '.vocab.w2v')
         sentences = SentencesFromPickle()
