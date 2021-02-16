@@ -2,7 +2,8 @@ import logging
 logger = logging.getLogger(__name__)
 import time
 import pickle
-import os
+from os.path import isfile
+import csv
 
 from elasticsearch import Elasticsearch
 
@@ -10,16 +11,29 @@ import string
 import re
 import nltk
 from nltk.corpus import words, wordnet, stopwords
+import spacy
 
-node = {'host': 'elastic.dhlab.hum.uu.nl',
-        'port': 9200}
-es = Elasticsearch([node], timeout=180)
+import config
+
+node = {'host': config.ES_HOST,
+        'port': config.ES_PORT}
+es = Elasticsearch(
+    [node], 
+    http_auth=(config.ES_USER, config.ES_PASSWORD),
+    timeout=180
+)
+nlp = spacy.load("en_core_web_trf")
+
 _englishWords = set(w.lower() for w in words.words())
 _englishStopWords = set(stopwords.words('english'))
 _dutchStopWords = set(stopwords.words('dutch'))
 _removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
 
 def sentences_from_elasticsearch(minYear, maxYear, index):
+    if not isfile(config.CSV_FILE):
+        with open(config.CSV_FILE, "w+") as csv_file:
+            csv_writer = csv.DictWriter(csv_file, fieldnames=('text', 'label'))
+            csv_writer.writeheader()
     for year in range(minYear, maxYear):
         tic = time.perf_counter()
         documents = getDocumentsForYear(year, index)
@@ -30,15 +44,17 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
             continue
         
         for doc in documents:
-            sentences = _getSentencesInArticle(doc)
-            if not sentences:
+            analyzed_doc = _analyzeDocument(doc)
+            if not analyzed_doc:
                 continue
-            with open('sentences.pkl', 'ab') as f:
-                for sentence in sentences:
-                    output = _prepareSentence(sentence)
-                    if output:
-                        pickle.dump(output, f)
-                        yield output
+            with open('documents.pkl', 'ab') as f:
+                pickle.dump(analyzed_doc, f)
+            places = [ent.update({'year': year}) for ent in analyzed_doc['entities'] if ent['label']=='GPE']
+            if places:
+                with open(config.CSV_FILE, "a") as csv_file:
+                    csv_writer = csv.DictWriter(csv_file, fieldnames=('text', 'label', 'year'))
+                    csv_writer.writerows(places)
+            
 
 
 class SentencesFromPickle():
@@ -73,29 +89,6 @@ def getNumberArticlesForTimeInterval(startY, endY, index):
     docs = es.search(index=index, body=search_body, track_total_hits=True, size=0)
     total_hits = docs['hits']['total']['value']
     return total_hits
-
-
-def getMinYear(index):
-    '''Retrieves the first year on the data set.'''
-    body = {
-        "aggs" : {
-            "min_date" : { "min" : { "field" : "date" } }
-        }
-    }
-    min_date = es.search(index=index, body=body, size=0)
-    #return int(min_date['aggregations']['min_date']['value_as_string'][:4])
-    return 1840 # returning fixed date for now
-
-def getMaxYear(index):
-    '''Retrieves the last year on the data set.'''
-    body = {
-        "aggs" : {
-            "max_date" : { "max" : { "field" : "date" } }
-        }
-    }
-    max_date = es.search(index=index, body=body, size=0)
-    #return int(max_date['aggregations']['max_date']['value_as_string'][:4])
-    return 1920 # returning fixed date for now
 
 
 def getSearchBody(min_date, max_date):
@@ -135,50 +128,32 @@ def getDocumentsForYear(year, index):
             logger.warning(e)
             time.sleep(10)
             docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
-            content = [result['_source']['content'] for result in docs['hits']['hits']]
+            content = [(result['_source']['id'], result['_source']['content']) for result in docs['hits']['hits']]
             continue
-        content.extend([result['_source']['content'] for result in docs['hits']['hits']])
+        content.extend([(result['_source']['id'], result['_source']['content']) for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
     return content
 
 
-def getSentencesForYear(year, index):
-    '''Return list of lists of strings.
-    Return list of sentences in given year.
-    Each sentence is a list of words.
-    Each word is a string.'''
-    docs = getDocumentsForYear(year, index)
-    sentences = []
+def getAnalyzedDocuments(docs):
+    ''' Return list of documents for each year.
+    Each document is returned with its id, and its analyzed content.
+    '''
+    analyzed_docs = []
     for doc in docs:
-        doc_tok = _getSentencesInArticle(doc.decode('utf-8'))
+        doc_tok = _analyzeDocument(doc[1].decode('utf-8'))
         if doc_tok:
-            sentences.extend(doc_tok)
-    final_sentences = [_prepareSentence(sentence) for sentence in sentences]
-    print(year, len(final_sentences))
-    return final_sentences
+            entities = [{'text': ent.text, 'label': ent.label_} for ent in doc_tok.ents]
+            # get all non-stopword and non-punctuation lemmas
+            lemmas = [token.lemma_ for token in doc_tok if not token.is_stop and token.is_alpha]
+            analyzed_docs.append({'id': doc[0], 'entities': entities, 'lemmas': lemmas})
+    return analyzed_docs
 
 
-def _getSentencesInArticle(body):
-    """Transform a single news paper article into a list of sentences (each
-    sentence represented by a string)."""
-    sent_tokenizer = nltk.punkt.PunktSentenceTokenizer()
-    if isinstance(body, str):
-        sentences = sent_tokenizer.tokenize(body)
-        return sentences
-    else:
-        print(body)
-
-
-def _prepareSentence(sentence):
-    """Document preparation a sentence. Document preparation
-    consists of: removing punctuation, removing invalid words, lowe casing and
-    splitting into individual words."""
-    sentence = _removePunctuation.sub('', sentence) 
-    sentence = sentence.lower()
-    sentence = sentence.split(' ')
-    sentence = [w for w in sentence if _isValidWord(w)]
-    if len(sentence) > 0:
-        return sentence
+def _analyzeDocument(doc):
+    """ Analyze the document using spaCy. """
+    doc_analyzed = nlp(doc)
+    return doc_analyzed
 
 
 def _isValidWord(word):
