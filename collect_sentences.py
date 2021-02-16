@@ -9,9 +9,8 @@ from elasticsearch import Elasticsearch
 
 import string
 import re
-import nltk
-from nltk.corpus import words, wordnet, stopwords
 import spacy
+import nltk
 
 import config
 
@@ -23,11 +22,6 @@ es = Elasticsearch(
     timeout=180
 )
 nlp = spacy.load("en_core_web_trf")
-
-_englishWords = set(w.lower() for w in words.words())
-_englishStopWords = set(stopwords.words('english'))
-_dutchStopWords = set(stopwords.words('dutch'))
-_removePunctuation = re.compile('[%s]' % re.escape(string.punctuation))
 
 def sentences_from_elasticsearch(minYear, maxYear, index):
     if not isfile(config.CSV_FILE):
@@ -42,17 +36,15 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
             year, toc - tic))
         if not documents:
             continue
-        
         for doc in documents:
-            analyzed_doc = _analyzeDocument(doc)
-            if not analyzed_doc:
-                continue
+            analyzed_document = _analyzeDocument(doc)
             with open('documents.pkl', 'ab') as f:
-                pickle.dump(analyzed_doc, f)
-            places = [ent.update({'year': year}) for ent in analyzed_doc['entities'] if ent['label']=='GPE']
+                pickle.dump(analyzed_document, f)
+            places = analyzed_document['places']
             if places:
+                place_output = [{'year': year, 'place': p['text']} for p in places]
                 with open(config.CSV_FILE, "a") as csv_file:
-                    csv_writer = csv.DictWriter(csv_file, fieldnames=('text', 'label', 'year'))
+                    csv_writer = csv.DictWriter(csv_file, fieldnames=('year', 'place'))
                     csv_writer.writerows(places)
             
 
@@ -117,7 +109,7 @@ def getDocumentsForYear(year, index):
             time.sleep(10)
     if not docs:
         return None
-    content = [result['_source']['content'] for result in docs['hits']['hits']]
+    content = [(result['_id'], result['_source']['content']) for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
@@ -128,42 +120,27 @@ def getDocumentsForYear(year, index):
             logger.warning(e)
             time.sleep(10)
             docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
-            content = [(result['_source']['id'], result['_source']['content']) for result in docs['hits']['hits']]
+            content = [(result['_id'], result['_source']['content']) for result in docs['hits']['hits']]
             continue
-        content.extend([(result['_source']['id'], result['_source']['content']) for result in docs['hits']['hits']])
+        content.extend([(result['_id'], result['_source']['content']) for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
     return content
 
 
-def getAnalyzedDocuments(docs):
-    ''' Return list of documents for each year.
-    Each document is returned with its id, and its analyzed content.
-    '''
-    analyzed_docs = []
-    for doc in docs:
-        doc_tok = _analyzeDocument(doc[1].decode('utf-8'))
-        if doc_tok:
-            entities = [{'text': ent.text, 'label': ent.label_} for ent in doc_tok.ents]
-            # get all non-stopword and non-punctuation lemmas
-            lemmas = [token.lemma_ for token in doc_tok if not token.is_stop and token.is_alpha]
-            analyzed_docs.append({'id': doc[0], 'entities': entities, 'lemmas': lemmas})
-    return analyzed_docs
-
-
 def _analyzeDocument(doc):
     """ Analyze the document using spaCy. """
-    doc_analyzed = nlp(doc)
-    return doc_analyzed
-
-
-def _isValidWord(word):
-    """Determine whether a word is valid. A valid word is a valid english
-    non-stop word."""
-    if word in _englishStopWords:
-        return False
-    elif word in _englishWords:
-        return True
-    elif wordnet.synsets(word):
-        return True
-    else:
-        return False
+    sentences = nltk.sent_tokenizer(doc[1])
+    entities = []
+    lemmas = []
+    places = []
+    for sentence in sentences:
+        sent_analyzed = nlp(sentence)
+        entities.extend(
+            [{'text': ent.text, 'label': ent.label_} for ent in sentence.ents]
+        )
+        # get all non-stopword and non-punctuation lemmas
+        lemmas.extend({
+            [token.lemma_ for token in sentence if not token.is_stop and token.is_alpha]
+        })
+        places.extend([ent for ent in entities if ent['label']=='GPE'])
+    return {'id': doc[0], 'entities': entities, 'lemmas': lemmas, 'places': places}
