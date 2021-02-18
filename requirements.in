@@ -2,4 +2,6 @@ docopt
 elasticsearch
 gensim
 nltk
+pandas
 spacy
+tqdm

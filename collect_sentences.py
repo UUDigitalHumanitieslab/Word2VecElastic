@@ -3,14 +3,14 @@ logger = logging.getLogger(__name__)
 import time
 import pickle
 from os.path import isfile
-import csv
-
-from elasticsearch import Elasticsearch
-
 import string
 import re
+
+from elasticsearch import Elasticsearch
+import pandas as pd
 import spacy
 import nltk
+from tqdm import tqdm
 
 import config
 
@@ -22,12 +22,9 @@ es = Elasticsearch(
     timeout=180
 )
 nlp = spacy.load("en_core_web_trf")
+sent_tokenizer = nltk.punkt.PunktSentenceTokenizer()
 
 def sentences_from_elasticsearch(minYear, maxYear, index):
-    if not isfile(config.CSV_FILE):
-        with open(config.CSV_FILE, "w+") as csv_file:
-            csv_writer = csv.DictWriter(csv_file, fieldnames=('text', 'label'))
-            csv_writer.writeheader()
     for year in range(minYear, maxYear):
         tic = time.perf_counter()
         documents = getDocumentsForYear(year, index)
@@ -36,16 +33,19 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
             year, toc - tic))
         if not documents:
             continue
-        for doc in documents:
+        first_doc = True
+        for doc in tqdm(documents):
             analyzed_document = _analyzeDocument(doc)
-            with open('documents.pkl', 'ab') as f:
-                pickle.dump(analyzed_document, f)
-            places = analyzed_document['places']
+            places = analyzed_document.pop('places')
+            df = pd.DataFrame()
+            df = df.append(analyzed_document, ignore_index=True)
+            df.to_csv('documents.csv', mode='a', header=first_doc, index=False)
             if places:
                 place_output = [{'year': year, 'place': p['text']} for p in places]
-                with open(config.CSV_FILE, "a") as csv_file:
-                    csv_writer = csv.DictWriter(csv_file, fieldnames=('year', 'place'))
-                    csv_writer.writerows(places)
+                df = pd.DataFrame(place_output)
+                df.to_csv('places.csv', mode='a', header=first_doc, index=False)
+            first_doc = False
+        
             
 
 
@@ -109,7 +109,7 @@ def getDocumentsForYear(year, index):
             time.sleep(10)
     if not docs:
         return None
-    content = [(result['_id'], result['_source']['content']) for result in docs['hits']['hits']]
+    content = [result for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
@@ -120,27 +120,27 @@ def getDocumentsForYear(year, index):
             logger.warning(e)
             time.sleep(10)
             docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
-            content = [(result['_id'], result['_source']['content']) for result in docs['hits']['hits']]
+            content = [result for result in docs['hits']['hits']]
             continue
-        content.extend([(result['_id'], result['_source']['content']) for result in docs['hits']['hits']])
+        content.extend([result for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
     return content
 
 
 def _analyzeDocument(doc):
     """ Analyze the document using spaCy. """
-    sentences = nltk.sent_tokenizer(doc[1])
+    sentences = sent_tokenizer.tokenize(doc['_source']['content'])
     entities = []
     lemmas = []
     places = []
     for sentence in sentences:
         sent_analyzed = nlp(sentence)
         entities.extend(
-            [{'text': ent.text, 'label': ent.label_} for ent in sentence.ents]
+            [{'text': ent.text, 'label': ent.label_} for ent in sent_analyzed.ents]
         )
         # get all non-stopword and non-punctuation lemmas
-        lemmas.extend({
-            [token.lemma_ for token in sentence if not token.is_stop and token.is_alpha]
-        })
-        places.extend([ent for ent in entities if ent['label']=='GPE'])
-    return {'id': doc[0], 'entities': entities, 'lemmas': lemmas, 'places': places}
+        lemmas.extend(
+            [token.lemma_ for token in sent_analyzed if not token.is_stop and token.is_alpha]
+        )
+    places = [ent for ent in entities if ent['label']=='GPE']
+    return {'id': doc['_id'], 'date': doc['_source']['date'], 'entities': entities, 'lemmas': lemmas, 'places': places}

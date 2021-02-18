@@ -19,22 +19,25 @@ jinja2==2.11.3            # via spacy
 markupsafe==1.1.1         # via jinja2
 murmurhash==1.0.5         # via preshed, spacy, thinc
 nltk==3.4                 # via -r requirements.in
-numpy==1.20.1             # via blis, gensim, scipy, spacy, thinc
+numpy==1.20.1             # via blis, gensim, pandas, scipy, spacy, thinc
 packaging==20.9           # via spacy
+pandas==1.2.2             # via -r requirements.in
 pathy==0.4.0              # via spacy
 preshed==3.0.5            # via spacy, thinc
 pydantic==1.7.3           # via spacy, thinc
 pyparsing==2.4.7          # via packaging
+python-dateutil==2.8.1    # via pandas
+pytz==2021.1              # via pandas
 requests==2.21.0          # via smart-open, spacy
 scipy==1.6.0              # via gensim
 singledispatch==3.4.0.3   # via nltk
-six==1.12.0               # via gensim, nltk, singledispatch
+six==1.12.0               # via gensim, nltk, python-dateutil, singledispatch
 smart-open==3.0.0         # via gensim, pathy
 spacy-legacy==3.0.1       # via spacy
 spacy==3.0.3              # via -r requirements.in
 srsly==2.4.0              # via spacy, thinc
 thinc==8.0.1              # via spacy
-tqdm==4.56.2              # via spacy
+tqdm==4.56.2              # via -r requirements.in, spacy
 typer==0.3.2              # via pathy, spacy
 typing-extensions==3.7.4.3  # via importlib-metadata, spacy, thinc
 urllib3==1.24.1           # via elasticsearch, requests
