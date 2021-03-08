@@ -16,11 +16,17 @@ import config
 
 node = {'host': config.ES_HOST,
         'port': config.ES_PORT}
-es = Elasticsearch(
+if config.ES_USER:
+    es = Elasticsearch(
     [node], 
     http_auth=(config.ES_USER, config.ES_PASSWORD),
     timeout=180
-)
+    )
+else:
+    es = Elasticsearch(
+        [node], 
+        timeout=180
+    )
 nlp = spacy.load("en_core_web_trf")
 sent_tokenizer = nltk.punkt.PunktSentenceTokenizer()
 
