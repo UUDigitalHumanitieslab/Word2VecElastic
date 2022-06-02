@@ -13,7 +13,7 @@ Options:
   --step <years>    Step between start year of generated models [default: 1]
   --index <index>   Which index to use for generating models
 """
-import gensim
+from gensim.models import Word2Vec
 
 from docopt import docopt
 from collect_sentences import sentences_from_elasticsearch, \
@@ -48,9 +48,10 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         logger.warning('Calculating years: {}-{}'.format(startY, endY))
         total_count = getNumberArticlesForTimeInterval(startY, endY, index)
         logger.warning('Total number of articles: '+str(total_count))
-        if isfile('sentences.pkl'):
-            os.remove('sentences.pkl')
-        sentences = sentences_from_elasticsearch(startY, endY, index)
+        if isfile('sentences{}-{}.pkl'.format(startY, endY)):
+            sentences = SentencesFromPickle(startY, endY)
+        else:
+            sentences = sentences_from_elasticsearch(startY, endY, index)
         tokens, words = count_tokens_words(sentences)
         logger.warning('Tokens: {}, Words: {}'.format(tokens, words))
         min_count = int(words / 200000)
@@ -59,16 +60,26 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
             csv_writer.writerow({'year': year, 
             'articles': total_count, 'tokens': tokens, 'words': words,
             'min_count': min_count})
-        modelName = '{}/{}_{}.w2v'.format(modelFolder, year, year + yearsInModel)
-        vocabName = modelName.replace('.w2v', '.vocab.w2v')
+        modelName = '{}/{}_{}.w2v'.format(modelFolder, startY, endY)
         sentences = SentencesFromPickle()
         logger.warning('Building model: '+modelName)
-        model = gensim.models.Word2Vec(min_count=min_count)
-        model.build_vocab(sentences)
-        model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
+        if year == y0:
+            # this is the initial model
+            model = Word2Vec(sentences, min_count=100, workers=14, epochs=5)
+            model.save(modelName)
+        else:
+            previousModel = '{}/{}_{}.w2v'.format(modelFolder, startY-step, endY-step)
+            model = Word2Vec.load(previousModel)
+            model.build_vocab(sentences, update=True)
+            model.train(
+                sentences,
+                total_examples=model.corpus_count,
+                start_alpha=model.alpha,
+                end_alpha=model.min_alpha,
+                epochs=model.iter
+            )
+            model.save(modelName)
         logger.warning('Saving to {}'.format(modelName))
-        model.init_sims(replace=True)
-        model.wv.save_word2vec_format(modelName, fvocab=vocabName, binary=True)
     
 
 def count_tokens_words(sentences):

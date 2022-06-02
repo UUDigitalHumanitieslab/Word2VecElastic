@@ -33,7 +33,7 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
             sentences = _getSentencesInArticle(doc)
             if not sentences:
                 continue
-            with open('sentences.pkl', 'ab') as f:
+            with open('sentences{}-{}.pkl'.format(minYear, maxYear), 'ab') as f:
                 for sentence in sentences:
                     output = _prepareSentence(sentence)
                     if output:
@@ -41,9 +41,11 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
                         yield output
 
 
-class SentencesFromPickle():
-    def __init__(self):
+class SentencesFromPickle(object):
+    def __init__(self, minYear, maxYear):
         self.generator = self.generator_function()
+        self.min_year = minYear
+        self.max_year = maxYear
 
     def __iter__(self):
         # reset the generator
@@ -58,7 +60,7 @@ class SentencesFromPickle():
             return result
     
     def generator_function(self):
-        with open('sentences.pkl', 'rb') as file:
+        with open('sentences{}-{}.pkl'.format(self.min_year, self.max_year), 'rb') as file:
             while True:
                 try:
                     yield pickle.load(file)
