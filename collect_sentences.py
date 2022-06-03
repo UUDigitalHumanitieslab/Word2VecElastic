@@ -101,40 +101,39 @@ def getMaxYear(index):
 
 
 def getSearchBody(min_date, max_date):
-    return { "query": {
-        "bool": {
-            "filter": [
-                {
-                    "range" : {
-                        "date" : {
-                            "gte" : min_date,
-                            "lte" : max_date
-                        }
-                    }
-                },
-                {
-                    "terms": {
-                        "circulation": ["Landelijk", "Regionaal/lokaal"]
-                    }
-                } 
-            ]
+    return {
+        "_source": ["speech"],
+        "query": {
+            "range" : {
+                "date" : {
+                    "gte" : min_date,
+                    "lte" : max_date
+                }
+            }
         }
-    }}
+    }
 
 def getDocumentsForYear(year, index):
-    '''Retrieves a list of documents for a year specified.'''
+    '''Retrieves a list of documents for a year specified,
+    scrolling in batches of 1000 documents '''
     min_date = str(year)+"-01-01"
     max_date = str(year)+"-12-31"
     search_body = getSearchBody(min_date, max_date)
     for retry in range(10):
         try:
-           docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
+           docs = es.search(
+               index=index,
+               body=search_body,
+               size=1000,
+               track_total_hits=True,
+                scroll="60m"
+            )
         except Exception as e:
             logger.warning(e)
             time.sleep(10)
     if not docs:
         return None
-    content = [result['_source']['content'] for result in docs['hits']['hits']]
+    content = [result['_source']['speech'] for result in docs['hits']['hits']]
     total_hits = docs['hits']['total']['value']
     scroll_id = docs['_scroll_id']
     while len(content)<total_hits:
@@ -142,12 +141,13 @@ def getDocumentsForYear(year, index):
         try:
             docs = es.scroll(scroll_id=scroll_id, scroll="60m")
         except Exception as e:
+            # restart search in case of server timeout
             logger.warning(e)
             time.sleep(10)
             docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
-            content = [result['_source']['content'] for result in docs['hits']['hits']]
+            content = [result['_source']['speech'] for result in docs['hits']['hits']]
             continue
-        content.extend([result['_source']['content'] for result in docs['hits']['hits']])
+        content.extend([result['_source']['speech'] for result in docs['hits']['hits']])
     es.clear_scroll(scroll_id=scroll_id)
     return content
 
@@ -160,15 +160,15 @@ def getSentencesForYear(year, index):
     docs = getDocumentsForYear(year, index)
     sentences = []
     for doc in docs:
-        doc_tok = _getSentencesInArticle(doc.decode('utf-8'))
+        doc_tok = _getSentencesInSpeech(doc.decode('utf-8'))
         if doc_tok:
             sentences.extend(doc_tok)
     final_sentences = [_prepareSentence(sentence) for sentence in sentences]
-    print(year, len(final_sentences))
+    logger.info(year, len(final_sentences))
     return final_sentences
 
 
-def _getSentencesInArticle(body):
+def _getSentencesInSpeech(body):
     """Transform a single news paper article into a list of sentences (each
     sentence represented by a string)."""
     sent_tokenizer = nltk.punkt.PunktSentenceTokenizer()
@@ -176,14 +176,14 @@ def _getSentencesInArticle(body):
         sentences = sent_tokenizer.tokenize(body)
         return sentences
     else:
-        print(body)
+        logger.error(body)
 
 
 def _prepareSentence(sentence):
     """Document preparation a sentence. Document preparation
     consists of: removing punctuation, removing invalid words, lowe casing and
     splitting into individual words."""
-    sentence = _removePunctuation.sub('', sentence) 
+    sentence = _removePunctuation.sub('', sentence)
     sentence = sentence.lower()
     sentence = sentence.split(' ')
     sentence = [w for w in sentence if _isValidWord(w)]
