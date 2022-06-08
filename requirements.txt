@@ -12,7 +12,7 @@ docopt==0.6.2
     # via -r requirements.in
 elasticsearch==7.17.4
     # via -r requirements.in
-gensim==4.2.0
+gensim==3.8.3
     # via -r requirements.in
 importlib-metadata==4.8.3
     # via click
@@ -29,6 +29,8 @@ numpy==1.19.5
 regex==2022.6.2
     # via nltk
 scipy==1.5.4
+    # via gensim
+six==1.16.0
     # via gensim
 smart-open==6.0.0
     # via gensim
