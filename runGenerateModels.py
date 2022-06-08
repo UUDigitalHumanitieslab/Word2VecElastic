@@ -61,7 +61,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
             'articles': total_count, 'tokens': tokens, 'words': words,
             'min_count': min_count})
         modelName = '{}/{}_{}.w2v'.format(modelFolder, startY, endY)
-        sentences = SentencesFromPickle()
+        sentences = SentencesFromPickle(startY, endY)
         logger.warning('Building model: '+modelName)
         if year == y0:
             # this is the initial model
