@@ -30,7 +30,7 @@ def sentences_from_elasticsearch(minYear, maxYear, index):
             continue
         
         for doc in documents:
-            sentences = _getSentencesInArticle(doc)
+            sentences = _getSentencesInDocument(doc)
             if not sentences:
                 continue
             with open('sentences{}-{}.pkl'.format(minYear, maxYear), 'ab') as f:
@@ -160,7 +160,7 @@ def getSentencesForYear(year, index):
     docs = getDocumentsForYear(year, index)
     sentences = []
     for doc in docs:
-        doc_tok = _getSentencesInSpeech(doc.decode('utf-8'))
+        doc_tok = _getSentencesInDocument(doc.decode('utf-8'))
         if doc_tok:
             sentences.extend(doc_tok)
     final_sentences = [_prepareSentence(sentence) for sentence in sentences]
@@ -168,12 +168,12 @@ def getSentencesForYear(year, index):
     return final_sentences
 
 
-def _getSentencesInSpeech(body):
-    """Transform a single news paper article into a list of sentences (each
+def _getSentencesInDocument(document):
+    """Transform a single document into a list of sentences (each
     sentence represented by a string)."""
     sent_tokenizer = nltk.punkt.PunktSentenceTokenizer()
-    if isinstance(body, str):
-        sentences = sent_tokenizer.tokenize(body)
+    if isinstance(document, str):
+        sentences = sent_tokenizer.tokenize(document)
         return sentences
     else:
         logger.error(body)
@@ -194,7 +194,7 @@ def _prepareSentence(sentence):
 def _isValidWord(word):
     """Determine whether a word is valid. A valid word is a dutch
     non-stop word."""
-    if word in _dutchStopWords:
+    if word in _englishStopWords:
         return False
     elif len(word)<3:
         return False

@@ -68,7 +68,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
             model = Word2Vec(sentences, min_count=100, workers=14, epochs=5)
             model.save(modelName)
         else:
-            previousModel = '{}/{}_{}.w2v'.format(modelFolder, startY-step, endY-step)
+            previousModel = '{}/{}_{}.w2v'.format(modelFolder, startY-stepYears, endY-stepYears)
             model = Word2Vec.load(previousModel)
             model.build_vocab(sentences, update=True)
             model.train(
