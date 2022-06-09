@@ -65,7 +65,7 @@ def generateModels(y0, yN, yearsInModel, stepYears, modelFolder, index):
         logger.warning('Building model: '+modelName)
         if year == y0:
             # this is the initial model
-            model = Word2Vec(sentences, min_count=100, workers=14, epochs=5)
+            model = Word2Vec(sentences, min_count=100, workers=14)
             model.save(modelName)
         else:
             previousModel = '{}/{}_{}.w2v'.format(modelFolder, startY-stepYears, endY-stepYears)
