@@ -64,6 +64,19 @@ class SentencesFromPickle():
                     yield pickle.load(file)
                 except EOFError:
                     break
+            
+def pickle_to_flat(filename):
+    outname = os.path.basename(filename)
+    outfile = 'text-{}.txt'.format(outname[9:-4]) # get only year information
+    with open(filename, 'rb') as pfile:
+        with open(outfile, 'a') as tfile:
+            while True:
+                try:
+                    content = pickle.load(pfile)
+                    tfile.write(' '.join(content))
+                    tfile.write(' ')
+                except EOFError:
+                    break
 
 
 def getNumberArticlesForTimeInterval(startY, endY, index):
