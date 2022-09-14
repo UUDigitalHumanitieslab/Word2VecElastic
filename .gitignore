@@ -1,4 +1,7 @@
 __pycache__/
 *.log
 *.csv
+*.pkl
+*.model
+*.w2v
 config.py
