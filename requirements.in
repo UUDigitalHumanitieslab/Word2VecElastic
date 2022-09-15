@@ -1,4 +1,5 @@
 docopt
 elasticsearch>=7.0, <8.0
 gensim
+nltk
 scikit-learn
