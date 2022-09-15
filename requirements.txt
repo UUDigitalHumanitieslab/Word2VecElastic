@@ -6,19 +6,31 @@
 #
 certifi==2022.6.15.2
     # via elasticsearch
+click==8.0.4
+    # via nltk
 docopt==0.6.2
     # via -r requirements.in
 elasticsearch==7.17.6
     # via -r requirements.in
 gensim==4.2.0
     # via -r requirements.in
+importlib-metadata==4.8.3
+    # via click
+importlib-resources==5.4.0
+    # via tqdm
 joblib==1.1.0
-    # via scikit-learn
+    # via
+    #   nltk
+    #   scikit-learn
+nltk==3.6.7
+    # via -r requirements.in
 numpy==1.19.5
     # via
     #   gensim
     #   scikit-learn
     #   scipy
+regex==2022.9.13
+    # via nltk
 scikit-learn==0.24.2
     # via -r requirements.in
 scipy==1.5.4
@@ -29,5 +41,13 @@ smart-open==6.2.0
     # via gensim
 threadpoolctl==3.1.0
     # via scikit-learn
+tqdm==4.64.1
+    # via nltk
+typing-extensions==4.1.1
+    # via importlib-metadata
 urllib3==1.26.12
     # via elasticsearch
+zipp==3.6.0
+    # via
+    #   importlib-metadata
+    #   importlib-resources
