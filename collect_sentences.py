@@ -118,6 +118,7 @@ class DataCollector():
         min_date = str(year)+"-01-01"
         max_date = str(year)+"-12-31"
         search_body = self.get_es_body(min_date, max_date)
+        docs = None
         for retry in range(10):
             try:
                docs = es.search(index=self.index, body=search_body, size=1000, scroll="60m", track_total_hits=True)
