@@ -5,3 +5,4 @@ __pycache__/
 *.model
 *.w2v
 config.py
+/test
