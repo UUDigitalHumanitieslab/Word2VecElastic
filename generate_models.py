@@ -42,7 +42,7 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
     sentences = DataCollector(index, start_year, end_year, language, field, model_folder)
     full_model_name = '{}-{}-{}-full.model'.format(index, start_year, end_year)
     if not os.path.exists(join(model_folder, full_model_name)):
-        model = Word2Vec(min_count=MIN_COUNT, alpha=0.1)
+        model = Word2Vec(min_count=MIN_COUNT)
         model.build_vocab(sentences)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
         model.save(os.path.join(model_folder, full_model_name))
