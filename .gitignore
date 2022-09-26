@@ -6,3 +6,4 @@ __pycache__/
 *.w2v
 config.py
 /test
+.env/
