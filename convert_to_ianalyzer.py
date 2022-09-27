@@ -4,11 +4,14 @@ from gensim.models import KeyedVectors
 import numpy as np
 import os
 import re
-from sklearn.feature_extraction.text import CountVectorizer
 import pickle
+from collect_sentences import DataCollector
+from generate_models import MIN_COUNT
 
 MODELS_DIR = '../models'
 OUTPUT_DIR = '../pickled_models'
+LANGUAGE = 'english'
+
 
 def import_keyed_vectors(modelfile):
     if modelfile.endswith('.model'):
@@ -28,26 +31,41 @@ def get_years(filename):
 
     return start_year, end_year
 
-def build_transformer(keyedvectors):
-    vocab = keyedvectors.index_to_key
-    cv = CountVectorizer(vocabulary=vocab)
-    cv.fit([])
+def generate_docs(start_year, end_year):
+    for filename in os.listdir(os.path.join(MODELS_DIR, 'source_data')):
+        if not 'vectorizer' in filename:
+            year = int(re.search(r'\d{4}', filename).group(0))
+            if year >= start_year and year < end_year:
+                path = os.path.join(MODELS_DIR, 'source_data', filename)
+                with open(path, 'rb') as datafile:
+                    data = pickle.load(datafile)
+                    for doc in data:
+                        for word in doc:
+                            # yield 'documents' of one word each
+                            # so we can use min_df to enforce minimum term frequency
+                            yield word
+
+def build_transformer(start_year, end_year):
+    cv = DataCollector.build_vectorizer(LANGUAGE, min_df=MIN_COUNT)
+    docs = generate_docs(start_year, end_year)
+    cv.fit(docs)
+    vocab_size = len(cv.vocabulary_)
+    print('{}-{}: {} words'.format(start_year, end_year, vocab_size))
+
     return cv
 
-def build_matrix(keyedvectors):
-    vectors = [keyedvectors.get_vector(key) for key in keyedvectors.index_to_key]
+def build_matrix(keyedvectors, transformer):
+    vectors = [keyedvectors.get_vector(key) for key in transformer.get_feature_names()]
     matrix = np.transpose(np.array(vectors))
     return matrix
 
 def test_index(keyedvectors, transformer, matrix):
-    term = 'democracy'
+    term = 'people'
 
-    original_index = keyedvectors.key_to_index['democracy']
     transformer_index = transformer.vocabulary_[term]
-    assert original_index == transformer_index
+    saved_vector = matrix[:, transformer_index]
 
     originaL_vector = keyedvectors.get_vector(term)
-    saved_vector = matrix[:, transformer_index]
     assert np.array_equal(originaL_vector, saved_vector)
 
 
@@ -55,8 +73,8 @@ def import_model(filename):
     path = os.path.join(MODELS_DIR, filename)
     start_year, end_year = get_years(filename)
     keyedvectors = import_keyed_vectors(path)
-    transformer = build_transformer(keyedvectors)
-    matrix = build_matrix(keyedvectors)
+    transformer = build_transformer(start_year, end_year)
+    matrix = build_matrix(keyedvectors, transformer)
 
     test_index(keyedvectors, transformer, matrix)
 

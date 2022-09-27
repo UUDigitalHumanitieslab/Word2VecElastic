@@ -64,9 +64,13 @@ class DataCollector():
     def set_generator_function(self):
         self.generator = self.get_sentences()
     
+    def build_vectorizer(language, min_df = 1):
+        stopword_list = stopwords.words(language)
+        cv = CountVectorizer(stop_words=stopword_list, min_df=min_df)
+        return cv
+    
     def get_sentences(self):
-        stopword_list = stopwords.words(self.language)
-        cv = CountVectorizer(stop_words=stopword_list)
+        cv = DataCollector.build_vectorizer(self.language)
         analyze = cv.build_analyzer()
         for year in range(self.start_year, self.end_year):
             filename = self.get_pickle_filename(year)
