@@ -70,7 +70,7 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
         logger.info('Saving to {}'.format(model_name))
         # init_sims precomputes the L2 norm, model cannot be trained further after this step
         model.init_sims(replace=True)
-        model.wv.save_word2vec_format(join(model_folder, model_name), binary=True)
+        model.wv.save_word2vec_format(join(model_folder, model_name))
     
 
 def count_tokens_words(sentences):
