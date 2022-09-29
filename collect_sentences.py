@@ -5,7 +5,7 @@ import string
 import re
 
 from elasticsearch import Elasticsearch
-from nltk.punkt import PunktSentenceTokenizer
+from nltk.tokenize import PunktSentenceTokenizer
 
 
 from util import check_path
