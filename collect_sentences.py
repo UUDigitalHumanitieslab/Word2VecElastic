@@ -5,10 +5,8 @@ import string
 import re
 
 from elasticsearch import Elasticsearch
+from nltk.punkt import PunktSentenceTokenizer
 
-import nltk
-from nltk.corpus import words, wordnet, stopwords
-from sklearn.feature_extraction.text import CountVectorizer
 
 from util import check_path
 
@@ -35,19 +33,22 @@ class DataCollector():
     - index: the name of the alias or index from which to collect data
     - start_year: first year from which to collect data
     - end_year: last year from which to collect data
-    - language: language of the corpus, used for choosing nltk stopword list
+    - analyzer: analyzer for the corpus, which does the following:
+        -remove stop words
+        -remove numbers
+        -lowercase
     - field: field from which to collect data
     - model_folder: folder into which pickled sentences and vectorizers will be saved
     (into subfolder: source_data)
     '''
-    def __init__(self, index, start_year, end_year, language, field, model_folder):
+    def __init__(self, index, start_year, end_year, analyzer, field, model_folder):
         self.index = index
         self.start_year = start_year
         self.end_year = end_year
         self.field = field
         self.extra_filter = None # None for now, could be used for e.g. removing newspaper adverts
         self.generator = self.set_generator_function()
-        self.language = language
+        self.analyzer = analyzer
         self.model_folder = model_folder
 
     def __iter__(self):
@@ -65,9 +66,6 @@ class DataCollector():
         self.generator = self.get_sentences()
     
     def get_sentences(self):
-        stopword_list = stopwords.words(self.language)
-        cv = CountVectorizer(stop_words=stopword_list)
-        analyze = cv.build_analyzer()
         for year in range(self.start_year, self.end_year):
             filename = self.get_pickle_filename(year)
             if os.path.exists(filename):
@@ -79,10 +77,7 @@ class DataCollector():
                 sentences = self.get_sentences_for_year(year)
                 if not sentences:
                     continue
-                cv.fit_transform(sentences)
-                with open(self.get_vectorizer_filename(year), 'wb') as vec_file:
-                    pickle.dump(cv, vec_file)
-                analyzed = [analyze(sen) for sen in sentences]
+                analyzed = [self.analyzer(sen) for sen in sentences]
                 with open(filename, 'wb') as text_file:
                     pickle.dump(analyzed, text_file)
                 for item in analyzed:
@@ -91,10 +86,6 @@ class DataCollector():
     def get_pickle_filename(self, year):
         check_path(os.path.join(self.model_folder, 'source_data'))
         return os.path.join(self.model_folder, 'source_data', '{}-{}.pkl'.format(self.index, year))
-    
-    def get_vectorizer_filename(self, year):
-        check_path(os.path.join(self.model_folder, 'source_data'))
-        return os.path.join(self.model_folder, 'source_data','{}-{}-vectorizer.pkl'.format(self.index, year))
 
     def get_sentences_for_year(self, year):
         '''Return list of lists of strings.
@@ -149,7 +140,7 @@ class DataCollector():
     def tokenize_sentences(self, body):
         """Transform a single news paper article into a list of sentences (each
         sentence represented by a string)."""
-        sent_tokenizer = nltk.punkt.PunktSentenceTokenizer()
+        sent_tokenizer = PunktSentenceTokenizer()
         if isinstance(body, str):
             return sent_tokenizer.tokenize(body)
         else:
