@@ -59,13 +59,16 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
         end = year + years_in_model
         model = Word2Vec.load(join(model_folder, full_model_name))
         model_name = '{}-{}-{}.w2v'.format(index, start, end)
-        vectorizer_name = '{}-{}-{}-vectorizer.pkl'.format(index, start, end)
+        doc_term_name = '{}-{}-{}-doc-term.pkl'.format(index, start, end)
+        vocab_name = '{}-{}-{}-vocab.pkl'.format(index, start, end)
         logger.info('Building model: '+ model_name)
         sentences = DataCollector(index, start, end, analyzer, field, model_folder)
         cv = CountVectorizer(analyzer=lambda x: x)
-        cv.fit_transform(sentences)
-        with open(vectorizer_name, 'wb') as vec_file:
-            pickle.dump(cv, vec_file)
+        doc_term = cv.fit_transform(sentences)
+        with open(doc_term_name, 'wb') as doc_term_file:
+            pickle.dump(doc_term, doc_term_file)
+        with open(vocab_name, 'wb') as vocab_file:
+            pickle.dump(cv.get_feature_names(), vocab_file)
         model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
         logger.info('Saving to {}'.format(model_name))
         # init_sims precomputes the L2 norm, model cannot be trained further after this step
