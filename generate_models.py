@@ -64,7 +64,7 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
         sentences = DataCollector(index, start, end, analyzer, field, model_folder)
         cv = CountVectorizer(analyzer=lambda x: x)
         cv.fit_transform(sentences)
-        with open(vocab_name, 'wb') as vec_file:
+        with open(vectorizer_name, 'wb') as vec_file:
             pickle.dump(cv, vec_file)
         model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
         logger.info('Saving to {}'.format(model_name))
