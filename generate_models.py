@@ -61,8 +61,8 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
         model_name = '{}-{}-{}.w2v'.format(index, start, end)
         vectorizer_name = '{}-{}-{}-vectorizer.pkl'.format(index, start, end)
         logger.info('Building model: '+ model_name)
-        sentences = DataCollector(index, start, end, language, field, model_folder)
-        cv = CountVectorizer(stop_words=stopword_list)
+        sentences = DataCollector(index, start, end, analyzer, field, model_folder)
+        cv = CountVectorizer(analyzer=lambda x: x)
         cv.fit_transform(sentences)
         with open(vocab_name, 'wb') as vec_file:
             pickle.dump(cv, vec_file)
