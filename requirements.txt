@@ -10,6 +10,8 @@ certifi==2022.6.15.2
     # via elasticsearch
 click==8.0.4
     # via nltk
+dataclasses==0.8
+    # via -r requirements.in
 docopt==0.6.2
     # via -r requirements.in
 elasticsearch==7.17.6

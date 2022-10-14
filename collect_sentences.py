@@ -84,7 +84,7 @@ class DataCollector():
                     yield item
     
     def get_pickle_filename(self, year):
-        check_path(os.path.join(self.model_folder, 'source_data'))
+        check_path('source_data')
         return os.path.join(self.model_folder, 'source_data', '{}-{}.pkl'.format(self.index, year))
 
     def get_sentences_for_year(self, year):
