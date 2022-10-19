@@ -85,7 +85,7 @@ class DataCollector():
     
     def get_pickle_filename(self, year):
         check_path('source_data')
-        return os.path.join(self.model_folder, 'source_data', '{}-{}.pkl'.format(self.index, year))
+        return os.path.join('source_data', '{}-{}.pkl'.format(self.index, year))
 
     def get_sentences_for_year(self, year):
         '''Return list of lists of strings.
