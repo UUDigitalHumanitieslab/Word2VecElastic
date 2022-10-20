@@ -68,12 +68,17 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
         with open(vectorizer_name, 'wb') as f:
             pickle.dump(analyzer, f)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
-        model.save(join(model_folder, full_model_name))
+        model.save(join(model_folder, full_model_file))
         model.init_sims(replace=True)
         model.wv.save_word2vec_format(
-            fname=join(model_folder, '{}.w2v'.format(full_model_name)),
-            fvocab=join(model_folder, '{}.vocab'.format(full_model_name)),
-            binary=True)
+            join(model_folder, '{}.w2v'.format(full_model_name)),
+            binary=True
+        )
+        vocab = list(model.wv.key_to_index.keys())
+        vocab_name = join(model_folder, '{}_vocab.pkl'.format(
+            full_model_name))
+        with open(vocab_name, 'wb') as f:
+            pickle.dump(vocab, f)
 
     stats = []
 
@@ -90,17 +95,18 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
         vocab = cv.get_feature_names()
         stats.append({
             'time': '{}-{}'.format(start, end),
-            'n_terms': doc_term.sum(axis=0),
-            'n_tokens': len(vocab)})
+            'n_tokens': doc_term.sum(),
+            'n_terms': len(vocab)})
         with open(vocab_name, 'wb') as vocab_file:
             pickle.dump(vocab, vocab_file)
         model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
         logger.info('Saving to {}'.format(model_name))
         # init_sims precomputes the L2 norm, model cannot be trained further after this step
         model.init_sims(replace=True)
-        model.wv.save_word2vec_format(join(model_folder, model_name))
+        model.wv.save_word2vec_format(join(model_folder, model_name), binary=True)
     with open(join(model_folder, '{}_stats.csv'.format(full_model_name)), 'w+') as f:
         writer = csv.DictWriter(f, fieldnames=('time', 'n_terms', 'n_tokens'))
+        writer.writeheader()
         writer.writerows(stats)
     
 
