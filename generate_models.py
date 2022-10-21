@@ -97,7 +97,7 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
             'time': '{}-{}'.format(start, end),
             'n_tokens': doc_term.sum(),
             'n_terms': len(vocab)})
-        with open(vocab_name, 'wb') as vocab_file:
+        with open(join(model_folder, vocab_name), 'wb') as vocab_file:
             pickle.dump(vocab, vocab_file)
         model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
         logger.info('Saving to {}'.format(model_name))
