@@ -3,7 +3,7 @@
 one of the models spans a given number of years.
 
 Usage:
-  runGenerateModels.py --start=<startYear> --end=<endYear> --n=<years> --out=<dir> [--step=<years>] --index=<index> [--lang=<language>] --field=<field> [--shift=<years>]
+  runGenerateModels.py --start=<startYear> --end=<endYear> --n=<years> --out=<dir> [--step=<years>] --index=<index> [--lang=<language>] --field=<field> [--shift=<years>] [--mc=<minCount>] [--dim=<dimensions>] [--mv=<maxVocabSize>]
 
 Options:
   --start <startYear>   First year in the generated models
@@ -14,6 +14,9 @@ Options:
   --index <index>   Which index to use for generating models
   --lang <language> Which language stopword list to use [default: english]
   --field <field>   Which field in the Elasticsearch index is used for extracting sentences
+  --mc <minCount> Minimum frequency of a token to be considered in the vocabulary [default: 50]
+  --dim <dimensions> The number of dimensions of the resulting word vectors [default: 128]
+  --mv <maxVocabSize> Maximum size of vocabulary, useful to set when training toy models [default: None]
 """
 import csv
 from os.path import join
@@ -36,7 +39,18 @@ logger = logging.getLogger(__name__)
 MIN_COUNT = 50
 N_DIMS = 128
 
-def generate_models(start_year, end_year, years_in_model, model_folder, index, field, shift_years=1, language='english'):
+def generate_models(
+        start_year,
+        end_year,
+        years_in_model,
+        model_folder,
+        index,
+        field,
+        shift_years=1,
+        language='english',
+        min_count=MIN_COUNT,
+        vector_size=N_DIMS,
+        max_vocab_size=None):
     """Generate time shifting w2v models on the given time range (start_year - end_year).
     Each model contains the specified number of years (years_in_model). The start
     year of each new model is set to be shift_years after the previous model.
@@ -48,9 +62,9 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
     - the vocabulary of the full model ('*full.vocab')
     - for each time bin:
         - its word vectors (gensim KeyedVectors) ('*start-end.w2v')
-        - the number of terms (after preprocessing such as stopword removal)
-        - the number of tokens (i.e., distinct words)
-        The statistics are saved to 
+        - the number of tokens (after preprocessing such as stopword removal)
+        - the number of terms (i.e., distinct words)
+        The statistics are saved to the model folder as a .csv
     """
     check_path(model_folder)
     stopword_list = stopwords.words(language)
@@ -60,7 +74,8 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
     full_model_name = '{}_{}_{}_full'.format(index, start_year, end_year)
     full_model_file =  '{}.model'.format(full_model_name)
     if not os.path.exists(join(model_folder, full_model_file)):
-        model = Word2Vec(min_count=MIN_COUNT, vector_size=N_DIMS)
+        print(min_count, vector_size, max_vocab_size)
+        model = Word2Vec(min_count=int(min_count), vector_size=int(vector_size), max_vocab_size=int(max_vocab_size) if max_vocab_size else None)
         model.build_vocab(sentences)
         # save the analyzer
         vectorizer_name = join(model_folder, '{}_analyzer.pkl'.format(
@@ -105,7 +120,7 @@ def generate_models(start_year, end_year, years_in_model, model_folder, index, f
         model.init_sims(replace=True)
         model.wv.save_word2vec_format(join(model_folder, model_name), binary=True)
     with open(join(model_folder, '{}_stats.csv'.format(full_model_name)), 'w+') as f:
-        writer = csv.DictWriter(f, fieldnames=('time', 'n_terms', 'n_tokens'))
+        writer = csv.DictWriter(f, fieldnames=('time', 'n_tokens', 'n_terms'))
         writer.writeheader()
         writer.writerows(stats)
     
@@ -120,6 +135,9 @@ if __name__ == '__main__':
     index = args['--index']
     language = args['--lang']
     field = args['--field']
+    min_count = int(args['--mc'])
+    vector_size = int(args['--dim'])
+    max_vocab_size = int(args['--mv'])
 
     generate_models(
         start_year,
@@ -129,5 +147,8 @@ if __name__ == '__main__':
         index,
         field,
         shift_years,
-        language
+        language,
+        min_count,
+        vector_size,
+        max_vocab_size
     )
