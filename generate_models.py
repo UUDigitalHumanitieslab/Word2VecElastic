@@ -74,7 +74,6 @@ def generate_models(
     full_model_name = '{}_{}_{}_full'.format(index, start_year, end_year)
     full_model_file =  '{}.model'.format(full_model_name)
     if not os.path.exists(join(model_folder, full_model_file)):
-        print(min_count, vector_size, max_vocab_size)
         model = Word2Vec(min_count=int(min_count), vector_size=int(vector_size), max_vocab_size=int(max_vocab_size) if max_vocab_size else None)
         model.build_vocab(sentences)
         # save the analyzer
@@ -101,24 +100,28 @@ def generate_models(
         start = year
         end = year + years_in_model
         model = Word2Vec.load(join(model_folder, full_model_file))
+        logger.info('Training model for year {}'.format(year))
         model_name = '{}_{}_{}.w2v'.format(index, start, end)
         vocab_name = '{}_{}_{}_vocab.pkl'.format(index, start, end)
         logger.info('Building model: '+ model_name)
         sentences = DataCollector(index, start, end, analyzer, field, model_folder)
         cv = CountVectorizer(analyzer=lambda x: x)
         doc_term = cv.fit_transform(sentences)
-        vocab = cv.get_feature_names()
+        cv_vocab = cv.get_feature_names()
         stats.append({
             'time': '{}-{}'.format(start, end),
             'n_tokens': doc_term.sum(),
             'n_terms': len(vocab)})
+        
+        model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
+        vocab = list(set(model.wv.key_to_index.keys()).intersection(set(cv_vocab)))
         with open(join(model_folder, vocab_name), 'wb') as vocab_file:
             pickle.dump(vocab, vocab_file)
-        model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
-        logger.info('Saving to {}'.format(model_name))
         # init_sims precomputes the L2 norm, model cannot be trained further after this step
         model.init_sims(replace=True)
+        
         model.wv.save_word2vec_format(join(model_folder, model_name), binary=True)
+        
     with open(join(model_folder, '{}_stats.csv'.format(full_model_name)), 'w+') as f:
         writer = csv.DictWriter(f, fieldnames=('time', 'n_tokens', 'n_terms'))
         writer.writeheader()
