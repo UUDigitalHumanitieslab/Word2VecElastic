@@ -3,20 +3,19 @@
 one of the models spans a given number of years.
 
 Usage:
-  runGenerateModels.py --start=<startYear> --end=<endYear> --n=<years> --out=<dir> [--step=<years>] --index=<index> [--lang=<language>] --field=<field> [--shift=<years>] [--mc=<minCount>] [--dim=<dimensions>] [--mv=<maxVocabSize>]
+  runGenerateModels.py --start=<startYear> --end=<endYear> --n=<years> --out=<dir> --index=<index> --field=<field> [--lang=<language>] [--shift=<years>] [--mc=<minCount>] [--dim=<dimensions>] [--mv=<maxVocabSize>]
 
 Options:
   --start <startYear>   First year in the generated models
   --end <endYear>   Last year in the generated models
   --n <years>   Number of years per model
-  --out <dir>   Directory where models will be writen to
+  --out <dir>   Directory where models will be written to
   --shift <years>   Step between start year of generated models [default: 1]
   --index <index>   Which index to use for generating models
   --lang <language> Which language stopword list to use [default: english]
   --field <field>   Which field in the Elasticsearch index is used for extracting sentences
   --mc <minCount> Minimum frequency of a token to be considered in the vocabulary [default: 50]
   --dim <dimensions> The number of dimensions of the resulting word vectors [default: 128]
-  --mv <maxVocabSize> Maximum size of vocabulary, useful to set when training toy models [default: None]
 """
 import csv
 from os.path import join
@@ -100,7 +99,6 @@ def generate_models(
         start = year
         end = year + years_in_model
         model = Word2Vec.load(join(model_folder, full_model_file))
-        logger.info('Training model for year {}'.format(year))
         model_name = '{}_{}_{}.w2v'.format(index, start, end)
         vocab_name = '{}_{}_{}_vocab.pkl'.format(index, start, end)
         logger.info('Building model: '+ model_name)
@@ -140,7 +138,9 @@ if __name__ == '__main__':
     field = args['--field']
     min_count = int(args['--mc'])
     vector_size = int(args['--dim'])
-    max_vocab_size = int(args['--mv'])
+    # max_vocab_size = int(args['--mv'])
+
+    print(shift_years, language)
 
     generate_models(
         start_year,
@@ -153,5 +153,5 @@ if __name__ == '__main__':
         language,
         min_count,
         vector_size,
-        max_vocab_size
+        # max_vocab_size
     )
