@@ -140,8 +140,6 @@ if __name__ == '__main__':
     vector_size = int(args['--dim'])
     # max_vocab_size = int(args['--mv'])
 
-    print(shift_years, language)
-
     generate_models(
         start_year,
         end_year,
