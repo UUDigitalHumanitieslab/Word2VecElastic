@@ -73,7 +73,7 @@ def generate_models(
     full_model_name = '{}_{}_{}_full'.format(index, start_year, end_year)
     full_model_file =  '{}.model'.format(full_model_name)
     if not os.path.exists(join(model_folder, full_model_file)):
-        model = Word2Vec(min_count=int(min_count), vector_size=int(vector_size), max_vocab_size=int(max_vocab_size) if max_vocab_size else None)
+        model = Word2Vec(min_count=min_count, vector_size=vector_size, max_vocab_size=max_vocab_size)
         model.build_vocab(sentences)
         # save the analyzer
         vectorizer_name = join(model_folder, '{}_analyzer.pkl'.format(
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     field = args['--field']
     min_count = int(args['--mc'])
     vector_size = int(args['--dim'])
-    # max_vocab_size = int(args['--mv'])
+    max_vocab_size = int(args['--mv'])
 
     generate_models(
         start_year,
@@ -151,5 +151,5 @@ if __name__ == '__main__':
         language,
         min_count,
         vector_size,
-        # max_vocab_size
+        max_vocab_size
     )
