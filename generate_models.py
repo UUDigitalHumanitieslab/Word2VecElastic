@@ -22,12 +22,12 @@ from os.path import join
 import os
 import pickle
 
-from docopt import docopt
+import click
 from gensim.models.word2vec import Word2Vec
-from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
 
 from collect_sentences import DataCollector
+from analyzer import Analyzer
 from util import check_path
 
 import logging
@@ -47,6 +47,7 @@ def generate_models(
         field,
         shift_years=1,
         language='english',
+        lemmatize=True,
         min_count=MIN_COUNT,
         vector_size=N_DIMS,
         max_vocab_size=None):
@@ -66,9 +67,8 @@ def generate_models(
         The statistics are saved to the model folder as a .csv
     """
     check_path(model_folder)
-    stopword_list = stopwords.words(language)
-    cv = CountVectorizer(stop_words=stopword_list)
-    analyzer = cv.build_analyzer()
+    analyzer = Analyzer(language, lemmatize).preprocess
+    cv = CountVectorizer(analyzer=analyzer)
     sentences = DataCollector(index, start_year, end_year, analyzer, field, model_folder)
     full_model_name = '{}_{}_{}_full'.format(index, start_year, end_year)
     full_model_file =  '{}.model'.format(full_model_name)
@@ -109,7 +109,7 @@ def generate_models(
         stats.append({
             'time': '{}-{}'.format(start, end),
             'n_tokens': doc_term.sum(),
-            'n_terms': len(vocab)})
+            'n_terms': len(cv_vocab)})
         
         model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
         vocab = list(set(model.wv.key_to_index.keys()).intersection(set(cv_vocab)))
