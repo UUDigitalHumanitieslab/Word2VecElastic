@@ -30,8 +30,6 @@ cymem==2.0.7
     #   preshed
     #   spacy
     #   thinc
-docopt==0.6.2
-    # via -r requirements.in
 elasticsearch==7.17.8
     # via -r requirements.in
 exceptiongroup==1.1.0

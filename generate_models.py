@@ -1,21 +1,6 @@
 #!/usr/bin/env python
 """Generate a set of time shifting models from the given period of years. Each
 one of the models spans a given number of years.
-
-Usage:
-  runGenerateModels.py --start=<startYear> --end=<endYear> --n=<years> --out=<dir> --index=<index> --field=<field> [--lang=<language>] [--shift=<years>] [--mc=<minCount>] [--dim=<dimensions>] [--mv=<maxVocabSize>]
-
-Options:
-  --start <startYear>   First year in the generated models
-  --end <endYear>   Last year in the generated models
-  --n <years>   Number of years per model
-  --out <dir>   Directory where models will be written to
-  --shift <years>   Step between start year of generated models [default: 1]
-  --index <index>   Which index to use for generating models
-  --lang <language> Which language stopword list to use [default: english]
-  --field <field>   Which field in the Elasticsearch index is used for extracting sentences
-  --mc <minCount> Minimum frequency of a token to be considered in the vocabulary [default: 50]
-  --dim <dimensions> The number of dimensions of the resulting word vectors [default: 128]
 """
 import csv
 from os.path import join
@@ -38,19 +23,32 @@ logger = logging.getLogger(__name__)
 MIN_COUNT = 50
 N_DIMS = 128
 
+@click.command()
+@click.option('-i', '--index', help="Elasticsearch index name from which to request the training data", required=True)
+@click.option('-s', '--start_year', help="Year from which to start training", required=True)
+@click.option('-e', '--end_year', help="Year until which to continue training", required=True)
+@click.option('n', '--n_years', help="Number of years each model should span", default=10)
+@click.option('-sh', '--shift_years', help="Shift between models", default=5)
+@click.option('-d', '--directory', help="Directory in which the models should be saved", required=True)
+@click.option('-f', '--field', help="Field from which to extract training data", default='content')
+@click.optoin('-l', '--language', help="Language of the training data", default='english')
+@click.option('-lem', '--lemmatize', help="Whether or not to perform lemmatization", default=False, is_flag=True)
+@click.option('-mc', '--min_count', help="Minimum count of a given word to be included in a model", default=MIN_COUNT)
+@click.option('-vs', '--vector_size', help="The size of the embedding vectors", default=N_DIMS)
+@click.option('-mv', '--max_vocab_size', help="Limit the size of the vocab, i.e., prune")
 def generate_models(
+        index,
         start_year,
         end_year,
-        years_in_model,
-        model_folder,
-        index,
+        n_years,
+        shift_years,
+        directory,
         field,
-        shift_years=1,
-        language='english',
-        lemmatize=True,
-        min_count=MIN_COUNT,
-        vector_size=N_DIMS,
-        max_vocab_size=None):
+        language,
+        lemmatize,
+        min_count,
+        vector_size,
+        max_vocab_size):
     """Generate time shifting w2v models on the given time range (start_year - end_year).
     Each model contains the specified number of years (years_in_model). The start
     year of each new model is set to be shift_years after the previous model.
@@ -127,29 +125,4 @@ def generate_models(
     
 
 if __name__ == '__main__':
-    args = docopt(__doc__)
-    years_in_model = int(args['--n'])
-    shift_years = int(args['--shift'])
-    model_folder = args['--out']
-    start_year = int(args['--start'])
-    end_year = int(args['--end'])
-    index = args['--index']
-    language = args['--lang']
-    field = args['--field']
-    min_count = int(args['--mc'])
-    vector_size = int(args['--dim'])
-    max_vocab_size = int(args['--mv'])
-
-    generate_models(
-        start_year,
-        end_year,
-        years_in_model,
-        model_folder,
-        index,
-        field,
-        shift_years,
-        language,
-        min_count,
-        vector_size,
-        max_vocab_size
-    )
+    generate_models()
