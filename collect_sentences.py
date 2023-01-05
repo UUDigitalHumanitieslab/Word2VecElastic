@@ -38,10 +38,9 @@ class DataCollector():
         -remove numbers
         -lowercase
     - field: field from which to collect data
-    - model_folder: folder into which pickled sentences and vectorizers will be saved
-    (into subfolder: source_data)
+    - source_directory: directory in which source data is saved
     '''
-    def __init__(self, index, start_year, end_year, analyzer, field, model_folder):
+    def __init__(self, index, start_year, end_year, analyzer, field, source_directory):
         self.index = index
         self.start_year = start_year
         self.end_year = end_year
@@ -49,7 +48,7 @@ class DataCollector():
         self.extra_filter = None # None for now, could be used for e.g. removing newspaper adverts
         self.generator = self.set_generator_function()
         self.analyzer = analyzer
-        self.model_folder = model_folder
+        self.source_directory = source_directory
 
     def __iter__(self):
         self.set_generator_function()
@@ -84,8 +83,8 @@ class DataCollector():
                     yield item
     
     def get_pickle_filename(self, year):
-        check_path('source_data')
-        return os.path.join('source_data', '{}-{}.pkl'.format(self.index, year))
+        check_path(self.source_directory)
+        return os.path.join(self.source_directory, '{}-{}.pkl'.format(self.index, year))
 
     def get_sentences_for_year(self, year):
         '''Return list of lists of strings.
