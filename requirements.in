@@ -1,7 +1,7 @@
-dataclasses
 docopt
 elasticsearch>=7.0, <8.0
 gensim
 nltk
 pytest
 scikit-learn
+spacy
