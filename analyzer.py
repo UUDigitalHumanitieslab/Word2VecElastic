@@ -57,7 +57,7 @@ class Analyzer(object):
             else:
                 return token.text
         
-        output = [select_token(token) for token in doc]
+        output = [select_token(token) for token in doc if select_token(token)]
         return output
     
 

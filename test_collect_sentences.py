@@ -1,4 +1,5 @@
 from collect_sentences import es, DataCollector
+from analyzer import Analyzer
 
 from util import check_path
 
@@ -22,12 +23,16 @@ def test_data_collector(monkeypatch):
     monkeypatch.setattr(es, 'clear_scroll', mock_clear_scroll)
     
     check_path('test')
+    analyzer = Analyzer(
+        language='english',
+        lemmatize=False
+    ).preprocess
     sentences = DataCollector(
-        'test_index',
-        1982,
-        1984,
-        'english',
-        'test_field',
-        'test'
+        index='test_index',
+        start_year=1982,
+        end_year=1984,
+        field='test_field',
+        analyzer=analyzer,
+        source_directory='test'
     )
     assert len(list(sentences)) == 12
