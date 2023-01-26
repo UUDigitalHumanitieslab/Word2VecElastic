@@ -20,8 +20,9 @@ logging.basicConfig(filename='models.log', level=logging.INFO, filemode='a', dat
     format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger(__name__)
 
-MIN_COUNT = 50
-N_DIMS = 128
+MIN_COUNT = 100
+N_DIMS = 100
+WINDOW_SIZE = 5
 
 @click.command()
 @click.option('-i', '--index', help="Elasticsearch index name from which to request the training data", required=True)
@@ -36,6 +37,7 @@ N_DIMS = 128
 @click.option('-lem', '--lemmatize', help="Whether or not to perform lemmatization", default=False, is_flag=True)
 @click.option('-mc', '--min_count', help="Minimum count of a given word to be included in a model", type=int, default=MIN_COUNT)
 @click.option('-vs', '--vector_size', help="The size of the embedding vectors", type=int, default=N_DIMS)
+@click.option('-ws', '--window_size', help="The size of the window considered for embeddings", type=int, default=WINDOW_SIZE)
 @click.option('-mv', '--max_vocab_size', help="Limit the size of the vocab, i.e., prune", type=int)
 @click.option('-in', '--independent', help="Train independent models", default=False, is_flag=True)
 def generate_models(
@@ -51,6 +53,7 @@ def generate_models(
         lemmatize,
         min_count,
         vector_size,
+        window_size,
         max_vocab_size,
         independent):
     """Generate time shifting w2v models on the given time range (start_year - end_year).
@@ -75,7 +78,12 @@ def generate_models(
     full_model_file =  '{}.model'.format(full_model_name)
     if not os.path.exists(join(model_directory, full_model_file)) and not independent:
         # skip this step when training independent models
-        model = Word2Vec(min_count=min_count, vector_size=vector_size, max_vocab_size=max_vocab_size)
+        model = Word2Vec(
+            min_count=min_count,
+            window=window_size,
+            vector_size=vector_size,
+            max_vocab_size=max_vocab_size
+        )
         model.build_vocab(sentences)
         # save the analyzer
         vectorizer_name = join(model_directory, '{}_analyzer.pkl'.format(
@@ -104,7 +112,12 @@ def generate_models(
         logger.info('Building model: '+ model_name)
         sentences = DataCollector(index, start, end, analyzer, field, source_directory)
         if independent:
-            model = Word2Vec(min_count=min_count, vector_size=vector_size, max_vocab_size=max_vocab_size)
+            model = Word2Vec(
+                min_count=min_count,
+                window=window_size,
+                vector_size=vector_size,
+                max_vocab_size=max_vocab_size
+            )
             model.build_vocab(sentences)
         else:
             model = Word2Vec.load(join(model_directory, full_model_file))
