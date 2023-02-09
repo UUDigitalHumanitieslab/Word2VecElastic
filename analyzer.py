@@ -42,22 +42,21 @@ class Analyzer(object):
     def preprocess(self, input_string):
         # apply analysis pipeline
         doc = self.nlp(input_string)
-        
-        def select_token(token):
-            exclude_conditions = [
-                token.is_punct,
-                token.is_currency,
-                token.is_stop,
-                token.is_digit
-            ]
-            if any(exclude_conditions):
-                pass
-            elif self.lemmatize:
-                return token.lemma_
-            else:
-                return token.text
-        
-        output = [select_token(token) for token in doc if select_token(token)]
+        output = [self.select_token(token).lower() for token in doc if select_token(token)]
         return output
+
+    def select_token(self, token):
+        exclude_conditions = [
+            token.is_punct,
+            token.is_currency,
+            token.is_stop,
+            token.is_digit
+        ]
+        if any(exclude_conditions):
+            pass
+        elif self.lemmatize:
+            return token.lemma_
+        else:
+            return token.text
     
 
