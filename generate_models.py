@@ -110,7 +110,7 @@ def generate_models(
             model = Word2Vec.load(join(model_directory, full_model_file))
         output1, n_tokens = model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
         saved_vectors, n_terms, n_tokens = get_vectors_and_stats(
-            model, n_tokens, independent
+            model, sentences, n_tokens, independent
         )
         stats.append({
             'time': '{}-{}'.format(start, end),
@@ -134,7 +134,7 @@ def get_model(sentences, min_count, window_size, vector_size, max_vocab_size):
     model.build_vocab(sentences)
     return model
 
-def get_vectors_and_stats(model, n_tokens, independent=False):
+def get_vectors_and_stats(model, sentences, n_tokens, independent):
     ''' return the word vectors of a model, and statistics on the number of terms and tokens '''
     if independent:
         vocab = model.wv.index_to_key
@@ -149,7 +149,7 @@ def get_vectors_and_stats(model, n_tokens, independent=False):
         vectors = model.wv
         vocab = list(set(vectors.index_to_key).intersection(set(cv_vocab)))
         # restrict the KeyedVectors to only those in the vocab of this time slice
-        output_vectors = KeyedVectors(vector_size)
+        output_vectors = KeyedVectors(model.vector_size)
         output_vectors.add_vectors(
             vocab, [vectors[word] for word in vocab])
     return output_vectors, n_terms, n_tokens
