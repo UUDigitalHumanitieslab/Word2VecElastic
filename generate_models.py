@@ -89,8 +89,7 @@ def generate_models(
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
         model.save(join(model_directory, full_model_file))
         model.wv.save(
-            join(model_directory, '{}.wv'.format(full_model_name)),
-            binary=True
+            join(model_directory, '{}.wv'.format(full_model_name))
         )
 
     stats = []
@@ -133,7 +132,7 @@ def generate_models(
             'time': '{}-{}'.format(start, end),
             'n_tokens': n_tokens,
             'n_terms': n_terms})    
-        saved_vectors.save(join(model_directory, model_name), binary=True)
+        saved_vectors.save(join(model_directory, model_name))
         
     with open(join(model_directory, '{}_stats.csv'.format(full_model_name)), 'w+') as f:
         writer = csv.DictWriter(f, fieldnames=('time', 'n_tokens', 'n_terms'))
