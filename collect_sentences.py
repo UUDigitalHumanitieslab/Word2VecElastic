@@ -20,7 +20,8 @@ except:
     ES_PORT = 9200
 
 node = {'host': ES_HOST,
-        'port': ES_PORT}
+        'port': ES_PORT,
+        'scheme': 'http'}
 es = Elasticsearch([node], timeout=180)
 
 
