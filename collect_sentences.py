@@ -70,12 +70,12 @@ class DataCollector():
             filename = self.get_pickle_filename(year)
             if os.path.exists(filename):
                 with open(filename, 'rb') as source_file:
-                    end_of_file_reached = False
-                    while not end_of_file_reached:
-                        sentence = pickle.load(source_file)
-                        if not sentence:
-                            end_of_file_reached = True
-                        yield sentence
+                    eof = False
+                    while not eof:
+                        try:
+                            yield pickle.load(source_file)
+                        except:
+                            eof = True
             else:
                 sentences = self.get_sentences_for_year(year)
                 if not sentences:
