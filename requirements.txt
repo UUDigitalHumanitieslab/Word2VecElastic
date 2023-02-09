@@ -15,7 +15,7 @@ catalogue==2.0.8
     #   thinc
 certifi==2022.12.7
     # via
-    #   elasticsearch
+    #   elastic-transport
     #   requests
 charset-normalizer==2.1.1
     # via requests
@@ -30,7 +30,9 @@ cymem==2.0.7
     #   preshed
     #   spacy
     #   thinc
-elasticsearch==7.17.8
+elastic-transport==8.4.0
+    # via elasticsearch
+elasticsearch==8.6.1
     # via -r requirements.in
 exceptiongroup==1.1.0
     # via pytest
@@ -157,7 +159,7 @@ typing-extensions==4.4.0
     # via pydantic
 urllib3==1.26.13
     # via
-    #   elasticsearch
+    #   elastic-transport
     #   requests
 wasabi==0.10.1
     # via

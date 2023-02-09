@@ -1,4 +1,4 @@
-elasticsearch>=7.0, <8.0
+elasticsearch
 gensim
 nltk
 pytest
