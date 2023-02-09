@@ -9,6 +9,7 @@ import pickle
 
 import click
 from gensim.models.word2vec import Word2Vec
+from gensim.models import KeyedVectors
 from sklearn.feature_extraction.text import CountVectorizer
 
 from collect_sentences import DataCollector
@@ -20,7 +21,7 @@ logging.basicConfig(filename='models.log', level=logging.INFO, filemode='a', dat
     format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger(__name__)
 
-MIN_COUNT = 100
+MIN_COUNT = 80
 N_DIMS = 100
 WINDOW_SIZE = 5
 
@@ -85,30 +86,19 @@ def generate_models(
             max_vocab_size=max_vocab_size
         )
         model.build_vocab(sentences)
-        # save the analyzer
-        vectorizer_name = join(model_directory, '{}_analyzer.pkl'.format(
-            full_model_name))
-        with open(vectorizer_name, 'wb') as f:
-            pickle.dump(analyzer, f)
         model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
         model.save(join(model_directory, full_model_file))
-        model.wv.save_word2vec_format(
-            join(model_directory, '{}.w2v'.format(full_model_name)),
+        model.wv.save(
+            join(model_directory, '{}.wv'.format(full_model_name)),
             binary=True
         )
-        vocab = list(model.wv.key_to_index.keys())
-        vocab_name = join(model_directory, '{}_vocab.pkl'.format(
-            full_model_name))
-        with open(vocab_name, 'wb') as f:
-            pickle.dump(vocab, f)
 
     stats = []
 
     for year in range(start_year, end_year - n_years + 1, shift_years):
         start = year
         end = year + n_years
-        model_name = '{}_{}_{}.w2v'.format(index, start, end)
-        vocab_name = '{}_{}_{}_vocab.pkl'.format(index, start, end)
+        model_name = '{}_{}_{}.wv'.format(index, start, end)
         logger.info('Building model: '+ model_name)
         sentences = DataCollector(index, start, end, analyzer, field, source_directory)
         if independent:
@@ -126,20 +116,24 @@ def generate_models(
             vocab = model.wv.key_to_index.keys()
             n_terms = len(vocab)
             n_tokens = output2
+            saved_vectors = model.wv
         else:
             cv = CountVectorizer(analyzer=lambda x: x)
             doc_term = cv.fit_transform(sentences)
             cv_vocab = cv.get_feature_names_out()
             n_terms = len(cv_vocab)
             n_tokens = doc_term.sum()
-            vocab = list(set(model.wv.key_to_index.keys()).intersection(set(cv_vocab)))
+            vectors = model.wv
+            vocab = list(set(vectors.key_to_index).intersection(set(cv_vocab)))
+            # restrict the KeyedVectors to only those in the vocab of this time slice
+            saved_vectors = KeyedVectors(vector_size)
+            saved_vectors.add_vectors(
+                vocab, [vectors[word] for word in vocab])
         stats.append({
             'time': '{}-{}'.format(start, end),
             'n_tokens': n_tokens,
-            'n_terms': n_terms})
-        with open(join(model_directory, vocab_name), 'wb') as vocab_file:
-            pickle.dump(vocab, vocab_file)     
-        model.wv.save_word2vec_format(join(model_directory, model_name), binary=True)
+            'n_terms': n_terms})    
+        saved_vectors.save(join(model_directory, model_name), binary=True)
         
     with open(join(model_directory, '{}_stats.csv'.format(full_model_name)), 'w+') as f:
         writer = csv.DictWriter(f, fieldnames=('time', 'n_tokens', 'n_terms'))
