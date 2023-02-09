@@ -32,7 +32,7 @@ def correct_vocab(model_folder):
             f.writelines(out_vocab)
 
 def sentences_to_lowercase(input_folder, output_folder):
-    old_files = glob('{}/*.w2v'.format(input_folder))
+    old_files = glob('{}/*.pkl'.format(input_folder))
     for sen_file in old_files:
         output_file = join(output_folder, basename(sen_file))
         with open(output_file, 'wb') as f_out:
