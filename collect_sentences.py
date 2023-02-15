@@ -20,7 +20,8 @@ except:
     ES_PORT = 9200
 
 node = {'host': ES_HOST,
-        'port': ES_PORT}
+        'port': ES_PORT,
+        'scheme': 'http'}
 es = Elasticsearch([node], timeout=180)
 
 
@@ -69,18 +70,21 @@ class DataCollector():
             filename = self.get_pickle_filename(year)
             if os.path.exists(filename):
                 with open(filename, 'rb') as source_file:
-                    sentences = pickle.load(source_file)
-                    for sen in sentences:
-                        yield sen
+                    eof = False
+                    while not eof:
+                        try:
+                            yield pickle.load(source_file)
+                        except:
+                            eof = True
             else:
                 sentences = self.get_sentences_for_year(year)
                 if not sentences:
                     continue
                 analyzed = [self.analyzer(sen) for sen in sentences]
                 with open(filename, 'wb') as text_file:
-                    pickle.dump(analyzed, text_file)
-                for item in analyzed:
-                    yield item
+                    for item in analyzed:
+                        pickle.dump(item, text_file)
+                        yield item
     
     def get_pickle_filename(self, year):
         check_path(self.source_directory)

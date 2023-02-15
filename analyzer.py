@@ -42,7 +42,7 @@ class Analyzer(object):
     def preprocess(self, input_string):
         # apply analysis pipeline
         doc = self.nlp(input_string)
-        output = [self.select_token(token).lower() for token in doc if select_token(token)]
+        output = [self.select_token(token).lower() for token in doc if self.select_token(token)]
         return output
 
     def select_token(self, token):

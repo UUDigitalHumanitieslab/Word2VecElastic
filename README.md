@@ -45,6 +45,6 @@ Optional flags:
 - mv: set to integer (e.g., 50000) if the vocabulary should be pruned while training the model, without a value provided, there is no limit on vocabulary size
 - ws: window size of the words to be trained (default: 5)
 - lem: set this flag if you want the data to be lemmatized
-- in: set this flag if you want to train independent models
+- in: set this flag if you want to train independent models, i.e., models which do not depend on data from other time slices
 You can also run
 `python generate_models.py -h` to see this documentation.
