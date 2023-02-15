@@ -25,19 +25,15 @@ spacy_models = {
 }
 
 class Analyzer(object):
-    def __init__(self, language, lemmatize):
+    def __init__(self, language, lemmatize, split_hyphens=True):
         self.lemmatize = lemmatize
         self.language = language
         self.stopword_list = stopwords.words(language)
         model = spacy_models.get(self.language)
         self.nlp = spacy.load(model)
-        # modify tokenizer so that it doesn't split on hyphens,
-        # but does treat a hyphen as a suffix
-        infix_re = compile_infix_regex(infixes)
-        self.nlp.tokenizer.infix_finditer = infix_re.finditer
-        suffixes = self.nlp.Defaults.suffixes + [r'''-+$''',]
-        suffix_regex = compile_suffix_regex(suffixes)
-        self.nlp.tokenizer.suffix_search = suffix_regex.search
+        if not split_hyphens:
+            self.nlp = modify_tokenizer(self.nlp)
+        
     
     def preprocess(self, input_string):
         # apply analysis pipeline
@@ -60,3 +56,13 @@ class Analyzer(object):
             return token.text
     
 
+def modify_tokenizer(nlp):
+    '''modify the tokenizer of a pipeline (nlp) 
+    so that it doesn't split on hyphens,
+    but does treat a hyphen as a suffix '''
+    infix_re = compile_infix_regex(infixes)
+    nlp.tokenizer.infix_finditer = infix_re.finditer
+    suffixes = nlp.Defaults.suffixes + [r'''-+$''',]
+    suffix_regex = compile_suffix_regex(suffixes)
+    nlp.tokenizer.suffix_search = suffix_regex.search
+    return nlp
