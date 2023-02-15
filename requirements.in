@@ -1,0 +1,6 @@
+elasticsearch
+gensim
+nltk
+pytest
+scikit-learn
+spacy

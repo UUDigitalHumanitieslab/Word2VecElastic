@@ -1,4 +1,10 @@
 __pycache__/
 *.log
 *.csv
+*.pkl
+*.model
+*.w2v
+*.wv
 config.py
+/test
+.env/
