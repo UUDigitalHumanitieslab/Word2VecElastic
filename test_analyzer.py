@@ -10,8 +10,9 @@ def test_data_analyzer():
     assert None not in output
 
 def test_hyphen_merge():
-    analyzer = Analyzer('english', False).preprocess
+    analyzer = Analyzer('english', True).preprocess
     test_sentence = 'The UK government are on the non-exciting but dangerous road of e-democracy.'
     output = analyzer(test_sentence)
     assert "non-exciting" in output
     assert "e-democracy" in output
+    assert len(output) == 6
