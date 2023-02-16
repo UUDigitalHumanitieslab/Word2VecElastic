@@ -16,3 +16,12 @@ def test_hyphen_merge():
     assert "non-exciting" in output
     assert "e-democracy" in output
     assert len(output) == 6
+
+def test_hyphen_exception():
+    analyzer = Analyzer('english', False).preprocess
+    test_sentence = 'Our post offices are always open.'
+    output = analyzer(test_sentence)
+    assert len(output) == 3
+    test_sentence = 'Post-war London was grim.'
+    output = analyzer(test_sentence)
+    assert 'post-war' in output

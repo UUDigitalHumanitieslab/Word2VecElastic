@@ -1,3 +1,5 @@
+import re
+
 from nltk.corpus import stopwords
 import spacy
 
@@ -18,14 +20,19 @@ class Analyzer(object):
     def preprocess(self, input_string):
         # apply analysis pipeline
         doc = self.nlp(input_string)
-        # there are some suffixes that indicate we don't want hyphen splitting
+        # there are some prefixes that indicate we don't want hyphen splitting
         exceptions = ['anti', 'e', 'extra', 'inter', 'neo', 'non', 'post', 'pre', 'pro']
-        word_indices = [
-            token.i for token in doc if token.text in exceptions
+        # first, check that the prefixes are indeed connected with a hyphen
+        prefixes = [
+            pref for pref in exceptions if '{}-'.format(pref) in input_string.lower()
         ]
-        with doc.retokenize() as retokenizer:
-            for index in word_indices:
-                retokenizer.merge(doc[index:index+3])
+        if len(prefixes):
+            word_indices = [
+                token.i for token in doc if token.text.lower() in prefixes
+            ]
+            with doc.retokenize() as retokenizer:
+                for index in word_indices:
+                    retokenizer.merge(doc[index:index+3])
         output = [self.select_token(token).lower() for token in doc if self.select_token(token)]
         return output
 
