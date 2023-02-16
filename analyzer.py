@@ -1,4 +1,3 @@
-import re
 from nltk.corpus import stopwords
 import spacy
 from spacy.tokens import Doc
