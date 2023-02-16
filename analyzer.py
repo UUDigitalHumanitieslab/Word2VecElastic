@@ -1,10 +1,5 @@
-import re
 from nltk.corpus import stopwords
 import spacy
-from spacy.tokens import Doc
-from spacy.lang.char_classes import ALPHA, ALPHA_LOWER, ALPHA_UPPER
-from spacy.lang.char_classes import CONCAT_QUOTES, LIST_ELLIPSES, LIST_ICONS
-from spacy.util import compile_infix_regex, compile_suffix_regex
 
 spacy_models = {
     'english': "en_core_web_sm",
@@ -47,4 +42,3 @@ class Analyzer(object):
             return token.lemma_
         else:
             return token.text
- 
