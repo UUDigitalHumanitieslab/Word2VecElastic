@@ -1,22 +1,10 @@
+import re
 from nltk.corpus import stopwords
 import spacy
 from spacy.tokens import Doc
 from spacy.lang.char_classes import ALPHA, ALPHA_LOWER, ALPHA_UPPER
 from spacy.lang.char_classes import CONCAT_QUOTES, LIST_ELLIPSES, LIST_ICONS
 from spacy.util import compile_infix_regex, compile_suffix_regex
-
-infixes = (
-    LIST_ELLIPSES
-    + LIST_ICONS
-    + [
-        r"(?<=[0-9])[+\-\*^](?=[0-9-])",
-        r"(?<=[{al}{q}])\.(?=[{au}{q}])".format(
-            al=ALPHA_LOWER, au=ALPHA_UPPER, q=CONCAT_QUOTES
-        ),
-        r"(?<=[{a}]),(?=[{a}])".format(a=ALPHA),
-        r"(?<=[{a}0-9])[:<>=/](?=[{a}])".format(a=ALPHA),
-    ]
-)
 
 spacy_models = {
     'english': "en_core_web_sm",
@@ -25,19 +13,24 @@ spacy_models = {
 }
 
 class Analyzer(object):
-    def __init__(self, language, lemmatize, split_hyphens=True):
+    def __init__(self, language, lemmatize):
         self.lemmatize = lemmatize
         self.language = language
         self.stopword_list = stopwords.words(language)
         model = spacy_models.get(self.language)
         self.nlp = spacy.load(model)
-        if not split_hyphens:
-            self.nlp = modify_tokenizer(self.nlp)
-        
     
     def preprocess(self, input_string):
         # apply analysis pipeline
         doc = self.nlp(input_string)
+        # there are some suffixes that indicate we don't want hyphen splitting
+        exceptions = ['anti', 'e', 'extra', 'inter', 'neo', 'non', 'post', 'pre', 'pro']
+        word_indices = [
+            token.i for token in doc if token.text in exceptions
+        ]
+        with doc.retokenize() as retokenizer:
+            for index in word_indices:
+                retokenizer.merge(doc[index:index+3])
         output = [self.select_token(token).lower() for token in doc if self.select_token(token)]
         return output
 
@@ -54,15 +47,4 @@ class Analyzer(object):
             return token.lemma_
         else:
             return token.text
-    
-
-def modify_tokenizer(nlp):
-    '''modify the tokenizer of a pipeline (nlp) 
-    so that it doesn't split on hyphens,
-    but does treat a hyphen as a suffix '''
-    infix_re = compile_infix_regex(infixes)
-    nlp.tokenizer.infix_finditer = infix_re.finditer
-    suffixes = nlp.Defaults.suffixes + [r'''-+$''',]
-    suffix_regex = compile_suffix_regex(suffixes)
-    nlp.tokenizer.suffix_search = suffix_regex.search
-    return nlp
+ 
