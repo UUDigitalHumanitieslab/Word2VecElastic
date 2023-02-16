@@ -1,5 +1,6 @@
 from collect_sentences import es, DataCollector
 from analyzer import Analyzer
+from shutil import rmtree
 
 from util import check_path
 
@@ -36,3 +37,4 @@ def test_data_collector(monkeypatch):
         source_directory='test'
     )
     assert len(list(sentences)) == 12
+    rmtree('test')

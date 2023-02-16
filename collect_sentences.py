@@ -80,11 +80,11 @@ class DataCollector():
                 sentences = self.get_sentences_for_year(year)
                 if not sentences:
                     continue
-                analyzed = [self.analyzer(sen) for sen in sentences]
                 with open(filename, 'wb') as text_file:
-                    for item in analyzed:
-                        pickle.dump(item, text_file)
-                        yield item
+                    for sentence in sentences:
+                        analyzed = self.analyzer(sentence)
+                        pickle.dump(analyzed, text_file)
+                        yield analyzed
     
     def get_pickle_filename(self, year):
         check_path(self.source_directory)
