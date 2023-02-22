@@ -37,11 +37,12 @@ class Analyzer(object):
             ]
             with doc.retokenize() as retokenizer:
                 for index in word_indices:
-                    try:
-                        retokenizer.merge(doc[index:index+3])
-                    except Exception as e:
-                        logger.error(input_string, doc[index:index+3])
-                        raise
+                    if doc[index+1].text == '-':
+                        try:
+                            retokenizer.merge(doc[index:index+3])
+                        except Exception as e:
+                            logger.error(input_string, doc[index:index+3])
+                            raise
         output = [self.select_token(token).lower() for token in doc if self.select_token(token)]
         return output
 

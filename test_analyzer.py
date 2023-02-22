@@ -25,3 +25,7 @@ def test_hyphen_exception():
     test_sentence = 'Post-war London was grim.'
     output = analyzer(test_sentence)
     assert 'post-war' in output
+    test_sentence = 'We only accept anti anti-war sentiments'
+    output = analyzer(test_sentence)
+    assert 'anti' in output
+    assert 'anti-war' in output
