@@ -3,6 +3,9 @@ import re
 from nltk.corpus import stopwords
 import spacy
 
+import logging
+logger = logging.getLogger(__name__)
+
 spacy_models = {
     'english': "en_core_web_sm",
     'german': "de_core_news_sm",
@@ -32,7 +35,11 @@ class Analyzer(object):
             ]
             with doc.retokenize() as retokenizer:
                 for index in word_indices:
-                    retokenizer.merge(doc[index:index+3])
+                    try:
+                        retokenizer.merge(doc[index:index+3])
+                    except Exception as e:
+                        logger.error(input_string, doc[index:index+3])
+                        raise
         output = [self.select_token(token).lower() for token in doc if self.select_token(token)]
         return output
 
