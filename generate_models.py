@@ -17,7 +17,7 @@ from analyzer import Analyzer
 from util import check_path
 
 import logging
-logging.basicConfig(filename='models.log', level=logging.INFO, filemode='a', datefmt='%Y-%m-%d %H:%M:%S', 
+logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a', datefmt='%Y-%m-%d %H:%M:%S', 
     format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger(__name__)
 
