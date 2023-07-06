@@ -37,7 +37,10 @@ class Analyzer(object):
             ]
             with doc.retokenize() as retokenizer:
                 for index in word_indices:
-                    if doc[index+1].text == '-':
+                    if len(doc) < index + 1:
+                        logger.error([d.text for d in doc])
+                        continue
+                    elif doc[index+1].text == '-':
                         try:
                             retokenizer.merge(doc[index:index+3])
                         except Exception as e:
