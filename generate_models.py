@@ -108,7 +108,8 @@ def generate_models(
             )
         else:
             model = Word2Vec.load(join(model_directory, full_model_file))
-        output1, n_tokens = model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
+        output1, n_tokens = model.train(sentences, start_alpha=.05,
+            total_examples=len(list(sentences)), epochs=model.epochs)
         saved_vectors, n_terms, n_tokens = get_vectors_and_stats(
             model, sentences, n_tokens, independent
         )
