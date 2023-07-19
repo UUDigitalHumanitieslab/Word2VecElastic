@@ -29,3 +29,15 @@ def test_hyphen_exception():
     output = analyzer(test_sentence)
     assert 'anti' in output
     assert 'anti-war' in output
+
+def test_end_of_string():
+    analyzer = Analyzer('english', False).preprocess
+    test_sentence = 'Most commerce is currently e.'
+    output = analyzer(test_sentence)
+    assert 'e' in output
+    test_sentence = 'I am anti war'
+    output = analyzer(test_sentence)
+    assert 'anti' in output
+    test_sentence = 'I was non-plussed.'
+    output = analyzer(test_sentence)
+    assert 'non-plussed' in output

@@ -1,6 +1,3 @@
-import re
-
-from nltk.corpus import stopwords
 import spacy
 
 import logging
@@ -18,7 +15,6 @@ class Analyzer(object):
     def __init__(self, language, lemmatize):
         self.lemmatize = lemmatize
         self.language = language
-        self.stopword_list = stopwords.words(language)
         model = spacy_models.get(self.language)
         self.nlp = spacy.load(model)
     
@@ -26,21 +22,21 @@ class Analyzer(object):
         # apply analysis pipeline
         doc = self.nlp(input_string)
         # there are some prefixes that indicate we don't want hyphen splitting
-        exceptions = ['anti', 'e', 'extra', 'inter', 'neo', 'non', 'post', 'pre', 'pro']
+        exceptions = ['anti', 'e', 'extra', 'inter', 'neo', 'non', 'post', 'pre', 'pro', 'ultra']
         # first, check that the prefixes are indeed connected with a hyphen
         prefixes = [
             pref for pref in exceptions if '{}-'.format(pref) in input_string.lower()
         ]
         if len(prefixes):
+            # get all indices where a potential hyphenated prefix could be located
+            # e.g., 'We do not support neo-liberalism' -> index would be -3
+            # as we merge at least three tokens, drop indices after -3
             word_indices = [
-                token.i for token in doc if token.text.lower() in prefixes
+                token.i for token in doc[:-3] if token.text.lower() in prefixes
             ]
             with doc.retokenize() as retokenizer:
                 for index in word_indices:
-                    if len(doc) < index + 1:
-                        logger.error([d.text for d in doc])
-                        continue
-                    elif doc[index+1].text == '-':
+                    if doc[index+1].text == '-':
                         try:
                             retokenizer.merge(doc[index:index+3])
                         except Exception as e:
