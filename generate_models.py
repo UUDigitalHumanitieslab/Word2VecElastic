@@ -5,7 +5,6 @@ one of the models spans a given number of years.
 import csv
 from os.path import join
 import os
-import pickle
 
 import click
 from gensim.models.word2vec import Word2Vec
