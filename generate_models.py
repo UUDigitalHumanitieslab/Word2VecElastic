@@ -5,7 +5,6 @@ one of the models spans a given number of years.
 import csv
 from os.path import join
 import os
-import pickle
 
 import click
 from gensim.models.word2vec import Word2Vec
@@ -17,7 +16,7 @@ from analyzer import Analyzer
 from util import check_path
 
 import logging
-logging.basicConfig(filename='models.log', level=logging.INFO, filemode='a', datefmt='%Y-%m-%d %H:%M:%S', 
+logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a', datefmt='%Y-%m-%d %H:%M:%S', 
     format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -108,7 +107,8 @@ def generate_models(
             )
         else:
             model = Word2Vec.load(join(model_directory, full_model_file))
-        output1, n_tokens = model.train(sentences, total_examples=len(list(sentences)), epochs=model.epochs)
+        output1, n_tokens = model.train(sentences, start_alpha=.05,
+            total_examples=len(list(sentences)), epochs=model.epochs)
         saved_vectors, n_terms, n_tokens = get_vectors_and_stats(
             model, sentences, n_tokens, independent
         )

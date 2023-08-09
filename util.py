@@ -1,5 +1,5 @@
 import os
-from os.path import splitext
+from os.path import basename, join, splitext
 import pickle
 from glob import glob
 
@@ -30,3 +30,17 @@ def correct_vocab(model_folder):
         out_vocab_text = '{}_vocab.txt'.format(name_scheme)
         with open(out_vocab_text, 'w+') as f:
             f.writelines(out_vocab)
+
+def sentences_to_lowercase(input_folder, output_folder):
+    old_files = glob('{}/*.pkl'.format(input_folder))
+    check_path(output_folder)
+    for sen_file in old_files:
+        output_file = join(output_folder, basename(sen_file))
+        with open(output_file, 'wb') as f_out:
+            with open(sen_file, 'rb') as f_in:
+                sentences = pickle.load(f_in)
+                for sen in sentences:
+                    new_sen = [s.lower() for s in sen]
+                    pickle.dump(new_sen, f_out)
+
+            
