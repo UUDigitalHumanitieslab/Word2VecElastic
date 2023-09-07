@@ -1,8 +1,6 @@
 import time
 import pickle
 import os
-import string
-import re
 
 from elasticsearch import Elasticsearch
 from nltk.tokenize import PunktSentenceTokenizer
@@ -21,8 +19,22 @@ except:
 
 node = {'host': ES_HOST,
         'port': ES_PORT,
-        'scheme': 'http'}
-es = Elasticsearch([node], timeout=180)
+    }
+kwargs = {
+    'max_retries': 15,
+    'retry_on_timeout': True,
+    'timeout': 180
+}
+
+try:
+    from config import API_KEY, CERTS_LOCATION
+    node['scheme'] = 'https'
+    kwargs['ca_certs'] = CERTS_LOCATION
+    kwargs['api_key'] = API_KEY
+except:
+    node['scheme'] = 'http'
+      
+es = Elasticsearch([node], **kwargs)
 
 
 class DataCollector():
