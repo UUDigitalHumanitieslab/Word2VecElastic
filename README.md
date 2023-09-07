@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/171899269.svg)](https://zenodo.org/badge/latestdoi/171899269)
 # Word2VecElastic
 This repository includes utility functions to build diachronic Word2Vec models in gensim, using an Elasticsearch index to collect the data, and SpaCy and NLTK to preprocess it.
 
