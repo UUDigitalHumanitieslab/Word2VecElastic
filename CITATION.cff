@@ -1,0 +1,18 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Word2VecElastic
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - name: >-
+      Research Software Lab, Centre for Digital Humanities,
+      Utrecht University
+abstract: >-
+  Collect sentences from ElasticSearch, preprocess and train
+  diachronic Word2Vec models
+license: BSD-3-Clause
+version: v1.0.0
