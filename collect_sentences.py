@@ -27,10 +27,10 @@ kwargs = {
 }
 
 try:
-    from config import API_KEY, CERTS_LOCATION
+    from config import API_ID, API_KEY, CERTS_LOCATION
     node['scheme'] = 'https'
     kwargs['ca_certs'] = CERTS_LOCATION
-    kwargs['api_key'] = API_KEY
+    kwargs['api_key'] = (API_ID, API_KEY)
 except:
     node['scheme'] = 'http'
       
