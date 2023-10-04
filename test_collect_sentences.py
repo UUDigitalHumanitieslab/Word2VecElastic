@@ -1,10 +1,35 @@
+from shutil import rmtree
+import tempfile
+
+import pytest
+
 from collect_sentences import es, DataCollector
 from analyzer import Analyzer
-from shutil import rmtree
 
-from util import check_path
+n_years = 5
+end_year = 1986
+start_year = end_year - n_years
 
-def test_data_collector(monkeypatch):
+@pytest.fixture
+def analyzer():
+    return Analyzer(
+        language='english',
+        lemmatize=False
+    ).preprocess
+
+@pytest.fixture
+def collector(analyzer):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        return DataCollector(
+            index='test_index',
+            start_year=start_year,
+            end_year=end_year,
+            field='test_field',
+            analyzer=analyzer,
+            source_directory=temp_dir
+        ) 
+
+def test_data_collector(monkeypatch, collector):
     def mock_search(index, body, size, scroll, track_total_hits):
         return {
             "_scroll_id": 42,
@@ -23,18 +48,18 @@ def test_data_collector(monkeypatch):
     monkeypatch.setattr(es, 'search', mock_search)
     monkeypatch.setattr(es, 'clear_scroll', mock_clear_scroll)
     
-    check_path('test')
-    analyzer = Analyzer(
-        language='english',
-        lemmatize=False
-    ).preprocess
-    sentences = DataCollector(
-        index='test_index',
-        start_year=1982,
-        end_year=1984,
-        field='test_field',
-        analyzer=analyzer,
-        source_directory='test'
-    )
-    assert len(list(sentences)) == 12
-    rmtree('test')
+    # check_path('test')
+    
+    sentences = collector
+    assert len(list(sentences)) == 6 * n_years
+
+def some_sentences(year):
+    if year == 1985:
+        return None
+    return ['some scrumptious sentence', 'and another fantastic great sentence']
+
+def test_get_sentences(monkeypatch, collector):
+    data_collector = collector
+    monkeypatch.setattr(data_collector, "get_sentences_for_year", some_sentences)
+    sentences = data_collector.get_sentences()
+    assert len(list(sentences)) == 2 * (n_years - 1)

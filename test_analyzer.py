@@ -32,7 +32,7 @@ def test_hyphen_exception():
 
 def test_end_of_string():
     analyzer = Analyzer('english', False).preprocess
-    test_sentence = 'Most commerce is currently e.'
+    test_sentence = 'Most commerce is currently e'
     output = analyzer(test_sentence)
     assert 'e' in output
     test_sentence = 'I am anti war'
