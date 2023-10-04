@@ -98,7 +98,7 @@ def generate_models(
         end = year + n_years
         model_name = '{}_{}_{}.wv'.format(index, start, end)
         logger.info('Building model: '+ model_name)
-        sentences = DataCollector(index, start, end, analyzer, field, source_directory)
+        sentences = DataCollector(index, start, end, analyzer, field, date_field, source_directory)
         if independent:
             model = get_model(
                 sentences,
