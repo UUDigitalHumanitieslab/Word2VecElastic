@@ -53,11 +53,12 @@ class DataCollector():
     - field: field from which to collect data
     - source_directory: directory in which source data is saved
     '''
-    def __init__(self, index, start_year, end_year, analyzer, field, source_directory):
+    def __init__(self, index, start_year, end_year, analyzer, field, date_field, source_directory):
         self.index = index
         self.start_year = start_year
         self.end_year = end_year
         self.field = field
+        self.date_field = date_field
         self.extra_filter = None # None for now, could be used for e.g. removing newspaper adverts
         self.generator = self.set_generator_function()
         self.analyzer = analyzer
@@ -105,8 +106,7 @@ class DataCollector():
     def get_sentences_for_year(self, year):
         '''Return list of lists of strings.
         Return list of sentences in given year.
-        Each sentence is a list of words.
-        Each word is a string.'''
+        Each sentence is a string.'''
         docs = self.get_documents_for_year(year)
         if not docs:
             return None
@@ -145,7 +145,7 @@ class DataCollector():
             except Exception as e:
                 logger.warning(e)
                 time.sleep(10)
-                docs = es.search(index=index, body=search_body, size=1000, scroll="60m")
+                docs = es.search(index=self.index, body=search_body, size=1000, scroll="60m")
                 content = [result['_source'][self.field] for result in docs['hits']['hits']]
                 continue
             content.extend([result['_source'][self.field] for result in docs['hits']['hits']])
@@ -168,7 +168,7 @@ class DataCollector():
                     "filter": [
                         {
                             "range" : {
-                                "date" : {
+                                self.date_field : {
                                     "gte" : min_date,
                                     "lte" : max_date
                                 }
