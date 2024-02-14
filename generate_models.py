@@ -9,11 +9,14 @@ import os
 import click
 from gensim.models.word2vec import Word2Vec
 from gensim.models import KeyedVectors
+from gensim.scripts.glove2word2vec import glove2word2vec
+from gensim.test.utils import get_tmpfile
 from sklearn.feature_extraction.text import CountVectorizer
 
 from collect_sentences import DataCollector
 from analyzer import Analyzer
 from util import check_path
+import ppmi
 
 import logging
 logging.basicConfig(filename='models.log', level=logging.WARNING, filemode='a', datefmt='%Y-%m-%d %H:%M:%S', 
@@ -41,6 +44,7 @@ WINDOW_SIZE = 5
 @click.option('-ws', '--window_size', help="The size of the window considered for embeddings", type=int, default=WINDOW_SIZE)
 @click.option('-mv', '--max_vocab_size', help="Limit the size of the vocab, i.e., prune", type=int)
 @click.option('-in', '--independent', help="Train models which don't depend on data from other time slices", default=False, is_flag=True)
+@click.optin('-a', '--algorithm', help="Which training algorithm to use", default='word2vec')
 def generate_models(
         index,
         start_year,
@@ -57,7 +61,8 @@ def generate_models(
         vector_size,
         window_size,
         max_vocab_size,
-        independent):
+        independent,
+        algorithm):
     """Generate time shifting w2v models on the given time range (start_year - end_year).
     Each model contains the specified number of years (years_in_model). The start
     year of each new model is set to be shift_years after the previous model.
@@ -79,15 +84,23 @@ def generate_models(
     full_model_file =  '{}.model'.format(full_model_name)
     if not os.path.exists(join(model_directory, full_model_file)) and not independent:
         # skip this step when training independent models
-        model = get_model(
-            sentences,
-            min_count,
-            window_size,
-            vector_size,
-            max_vocab_size
-        )
-        model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
-        model.save(join(model_directory, full_model_file))
+        if algorithm == 'word2vec':
+            model = get_model(
+                sentences,
+                min_count,
+                window_size,
+                vector_size,
+                max_vocab_size
+            )
+            model.train(sentences, total_examples=model.corpus_count,
+                        epochs=model.epochs)
+            model.save(join(model_directory, full_model_file))
+        elif algorithm == 'ppmi':
+            model = train_ppmi(list(sentences), vector_size)
+        else:
+            logger.error(
+                'unknown training algorithm specified, choose `word2vec` or `ppmi`')
+            return
         model.wv.save(
             join(model_directory, '{}.wv'.format(full_model_name))
         )
@@ -99,18 +112,25 @@ def generate_models(
         model_name = '{}_{}_{}.wv'.format(index, start, end)
         logger.info('Building model: '+ model_name)
         sentences = DataCollector(index, start, end, analyzer, field, date_field, source_directory)
-        if independent:
-            model = get_model(
-                sentences,
-                min_count,
-                window_size,
-                vector_size,
-                max_vocab_size
-            )
+        if algorithm == 'word2vec':
+            if independent:
+                model = get_model(
+                    sentences,
+                    min_count,
+                    window_size,
+                    vector_size,
+                    max_vocab_size
+                )
+            else:
+                model = Word2Vec.load(join(model_directory, full_model_file))
+                output1, n_tokens = model.train(sentences, start_alpha=.05,
+                                                total_examples=len(list(sentences)), epochs=model.epochs)
+        elif algorithm == 'ppmi':
+            model = train_ppmi(list(sentences), vector_size)
         else:
-            model = Word2Vec.load(join(model_directory, full_model_file))
-        output1, n_tokens = model.train(sentences, start_alpha=.05,
-            total_examples=len(list(sentences)), epochs=model.epochs)
+            logger.error(
+                'unknown training algorithm specified, choose `word2vec` or `ppmi`')
+            return
         saved_vectors, n_terms, n_tokens = get_vectors_and_stats(
             model, sentences, n_tokens, independent
         )
@@ -136,7 +156,8 @@ def get_model(sentences, min_count, window_size, vector_size, max_vocab_size):
     model.build_vocab(sentences)
     return model
 
-def get_vectors_and_stats(model, sentences, n_tokens, independent):
+
+def get_vectors_and_stats(model, sentences, n_tokens, independent: bool):
     ''' return the word vectors of a model, and statistics on the number of terms and tokens '''
     if independent:
         vocab = model.wv.index_to_key
@@ -155,7 +176,47 @@ def get_vectors_and_stats(model, sentences, n_tokens, independent):
         output_vectors.add_vectors(
             vocab, [vectors[word] for word in vocab])
     return output_vectors, n_terms, n_tokens
-    
+
+
+def train_ppmi(docs, vector_size):
+    transformer, counts = ppmi.count_words(docs)
+    ppmi_counts = ppmi.ppmi(counts)
+    weights = ppmi.svd_ppmi(ppmi_counts, n_features=vector_size)
+    vocab = get_vocab_ppmi(transformer)
+    # the following two methods convert the weights from ppmi into a gensim model
+    converted_vectors = convert_vectors(weights, vocab)
+    model = converted_vectors_to_model(converted_vectors)
+    return model
+
+
+def get_vocab_ppmi(transformer):
+    vocab = transformer.get_feature_names()
+    return vocab
+
+
+def convert_vectors(vectors, vocab):
+    ''' given vectors (numpy array) and vocab,
+    return a white-space delimited string of each vocab word,
+    followed by weights in str format and a newline character
+    '''
+    vector_as_list = [list(map(str, list(v))) for v in vectors.T]
+    for i, v in enumerate(vector_as_list):
+        v.insert(0, vocab[i])
+        v.append('\n')
+    return [' '.join(v) for v in vector_as_list]
+
+
+def converted_vectors_to_model(converted_vectors):
+    ''' given vectors converted to a list of strings,
+    save as temporary .txt file, and convert this to a gensim KeyedVector
+    '''
+    tmp_glove = get_tmpfile('fake_glove.txt')
+    tmp_word2vec = get_tmpfile('fake_word2vec.txt')
+    with open(tmp_glove, 'w+') as f:
+        f.writelines(converted_vectors)
+    _ = glove2word2vec(tmp_glove, tmp_word2vec)
+    model = KeyedVectors.load_word2vec_format(tmp_word2vec)
+    return model
 
 if __name__ == '__main__':
     generate_models()
