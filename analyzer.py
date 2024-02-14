@@ -11,7 +11,7 @@ spacy_models = {
     'french': "fr_core_news_sm",
     'swedish': "sv_core_news_sm",
     'dutch': "nl_core_news_sm",
-    'finnish': "fi_core_news_sm"
+    'finnish': "fi_core_news_lg"
 }
 
 class Analyzer(object):
