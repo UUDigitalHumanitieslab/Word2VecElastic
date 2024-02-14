@@ -44,7 +44,7 @@ WINDOW_SIZE = 5
 @click.option('-ws', '--window_size', help="The size of the window considered for embeddings", type=int, default=WINDOW_SIZE)
 @click.option('-mv', '--max_vocab_size', help="Limit the size of the vocab, i.e., prune", type=int)
 @click.option('-in', '--independent', help="Train models which don't depend on data from other time slices", default=False, is_flag=True)
-@click.optin('-a', '--algorithm', help="Which training algorithm to use", default='word2vec')
+@click.option('-a', '--algorithm', help="Which training algorithm to use", default='word2vec')
 def generate_models(
         index,
         start_year,
