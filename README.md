@@ -11,6 +11,7 @@ The code was tested in Python 3.8. Create a virtualenv (`python -m venv your_env
 ```
 pip install -r requirements.txt
 ```
+
 ## NLTK stopwords
 Download the NLTK stopword list as follows: with activated environment, log into the Python shell. Then run
 ```
@@ -49,3 +50,23 @@ Optional flags:
 - in: set this flag if you want to train independent models, i.e., models which do not depend on data from other time slices
 You can also run
 `python generate_models.py -h` to see this documentation.
+
+# Output
+The training script generates three kinds of output:
+- preprocessing output, the result of tokenizing, stop word removal and (optional) lemmatization of the source data from Elasticsearch, saved as Python binary `.pkl` files, named after index and year, in `source_directory` (set through `-sd` flag).
+- word2vec output, the result of traning on the preprocessed data, saved as KeyedVectors, named after the index and time window, with the extension `.wv` in the `model_directory` (set through `-md` flag).
+- statistics about the number of tokens (all words in the model not discarded during stopword removal) and number of terms (all distinct tokens), named after the index and time window, and saved as a comma-separated table (`.csv`) in the `model_directory`.
+
+## Preprocessing output
+To inspect the preprocessing output, install the dependecies of this repository (see (Prerequesites)[#Prerequesites]), then open a Python terminal.
+To get a list of sentences (each a list of words), use the following workflow:
+```python
+from util import inspect_source_data
+sentences = inspect_source_data('/{filepath}/{index_name}-{year}.pkl')
+```
+
+To write the source data to a text file, use the following workflow:
+```python
+from util import source_data_to_file
+source_data_to_file('/{filepath}/{index_name}-{year}.pkl')
+```

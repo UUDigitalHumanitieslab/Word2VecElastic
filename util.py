@@ -43,4 +43,30 @@ def sentences_to_lowercase(input_folder, output_folder):
                     new_sen = [s.lower() for s in sen]
                     pickle.dump(new_sen, f_out)
 
-            
+
+def inspect_source_data(input_file):
+    ''' given a pickle file from the source_data directory,
+    return its contents as a list
+    '''
+    processed_sentences = []
+    eof = False
+    with open(input_file, 'rb') as f:
+        while eof is False:
+            try:
+                processed_sentences.append(pickle.load(f))
+            except:
+                eof = True
+    return processed_sentences
+
+
+def source_data_to_file(input_file):
+    ''' given a pickle file from the source_data directory,
+    write a text file of the same name and `txt` extension.
+    Each line in the file is one sentence from the source file
+    '''
+    sentences = inspect_source_data(input_file)
+    output_file = splitext(input_file)[0] + 'txt'
+    with open(output_file, 'w') as f:
+        for sen in sentences:
+            f.write(' '.join(sen) + '\n')
+    return 'done'
