@@ -123,10 +123,10 @@ def generate_models(
                 )
             else:
                 model = Word2Vec.load(join(model_directory, full_model_file))
-                output1, n_tokens = model.train(sentences, start_alpha=.05,
-                                                total_examples=len(list(sentences)), epochs=model.epochs)
+            model.train(sentences, start_alpha=.05,
+                        total_examples=len(list(sentences)), epochs=model.epochs)
         elif algorithm == 'ppmi':
-            model = train_ppmi(list(sentences), vector_size)
+            model, n_tokens = train_ppmi(list(sentences), vector_size)
         else:
             logger.error(
                 'unknown training algorithm specified, choose `word2vec` or `ppmi`')
@@ -137,13 +137,14 @@ def generate_models(
         stats.append({
             'time': '{}-{}'.format(start, end),
             'n_tokens': n_tokens,
-            'n_terms': n_terms})    
+            'n_terms': n_terms})
         saved_vectors.save(join(model_directory, model_name))
         
     with open(join(model_directory, '{}_stats.csv'.format(full_model_name)), 'w+') as f:
         writer = csv.DictWriter(f, fieldnames=('time', 'n_tokens', 'n_terms'))
         writer.writeheader()
         writer.writerows(stats)
+
 
 def get_model(sentences, min_count, window_size, vector_size, max_vocab_size):
     ''' prepare a Word2Vec model and build its vocabulary '''
@@ -182,16 +183,12 @@ def train_ppmi(docs, vector_size):
     transformer, counts = ppmi.count_words(docs)
     ppmi_counts = ppmi.ppmi(counts)
     weights = ppmi.svd_ppmi(ppmi_counts, n_features=vector_size)
-    vocab = get_vocab_ppmi(transformer)
+    vocab = transformer.get_feature_names()
+    n_tokens = counts.sum()
     # the following two methods convert the weights from ppmi into a gensim model
     converted_vectors = convert_vectors(weights, vocab)
     model = converted_vectors_to_model(converted_vectors)
-    return model
-
-
-def get_vocab_ppmi(transformer):
-    vocab = transformer.get_feature_names()
-    return vocab
+    return model, n_tokens
 
 
 def convert_vectors(vectors, vocab):
