@@ -123,7 +123,7 @@ def generate_models(
                 )
             else:
                 model = Word2Vec.load(join(model_directory, full_model_file))
-            model.train(sentences, start_alpha=.05,
+            _output, n_tokens = model.train(sentences, start_alpha=.05,
                         total_examples=len(list(sentences)), epochs=model.epochs)
         elif algorithm == 'ppmi':
             model, n_tokens = train_ppmi(list(sentences), vector_size)
