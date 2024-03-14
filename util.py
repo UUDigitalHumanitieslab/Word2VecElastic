@@ -65,7 +65,7 @@ def source_data_to_file(input_file):
     Each line in the file is one sentence from the source file
     '''
     sentences = inspect_source_data(input_file)
-    output_file = splitext(input_file)[0] + 'txt'
+    output_file = splitext(input_file)[0] + '.txt'
     with open(output_file, 'w') as f:
         for sen in sentences:
             f.write(' '.join(sen) + '\n')
